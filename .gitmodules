@@ -1,0 +1,4 @@
+[submodule "fxdis-d3d1x"]
+	path = fxdis-d3d1x
+	url = git@github.com:Philpax/fxdis-d3d1x.git
+	branch = library

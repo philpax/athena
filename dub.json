@@ -1,0 +1,8 @@
+{
+	"name": "athena",
+	"description": "A fxdis-based SM4 decompiler.",
+	"copyright": "Copyright © 2015, Mithun",
+	"authors": ["Mithun"],
+	"dependencies": {},
+	"sourceFiles-dmd": ["fxdis-d3d1x/fxdis.lib"]
+}
