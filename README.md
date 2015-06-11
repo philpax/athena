@@ -13,12 +13,16 @@ This AST is then processed through multiple passes which clean it up and provide
 
 ## Building
 Athena currently only works with DMD 64-bit on Windows. This is due to the dependence on fxdis; in future, fxdis may be ported to work on other platforms/compilers.
+
 1. Build fxdis-d3d11 in 64-bit mode as a library in Release mode.
 2. Copy the resulting library to the root of the fxdis folder (i.e. fxdis-d3d1x/fxdis.lib).
 3. Build Athena using `dub build --arch=x86_64`.
 
 ## Running
 If running separately:
-`athena --mode=decompile|disassemble file`
+
+    athena --mode=decompile|disassemble file
+
 If running through dub:
-`dub run --arch=x86_64 -- --mode=decompile|disassemble file`
+
+    dub run --arch=x86_64 -- --mode=decompile|disassemble file
