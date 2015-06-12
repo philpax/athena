@@ -23,10 +23,9 @@ void main(string[] args)
 		"mode", "Control whether to disassemble or decompile.", &mode);
 
 	enforce(args.length > 1, "Expected a filename.");
-	auto file = cast(ubyte[])read(args[1]);
 
-	auto program = Program.parse(file);
-	enforce(program, "Failed to parse SM4 program.");
+	auto file = cast(ubyte[])args[1].read();
+	auto program = Program.parse(file).enforce("Failed to parse SM4 program.");
 	scope (exit) program.destroy();
 
 	if (mode == Mode.decompile)
@@ -35,7 +34,7 @@ void main(string[] args)
 	}
 	else
 	{
-		import sm4.dump : dumpProgram;
-		program.dumpProgram();
+		import disassembler.main;
+		program.dump();
 	}
 }
