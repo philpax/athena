@@ -30,7 +30,16 @@ void main(string[] args)
 
 	if (mode == Mode.decompile)
 	{
-		enforce(false, "Unimplemented");
+		import decompiler.main;
+		auto rootNode = new Decompiler(program).run();
+
+		if (process)
+		{
+		}
+
+		import decompiler.dumpvisitor;
+		auto dumpVisitor = new DumpVisitor;
+		rootNode.accept(dumpVisitor);
 	}
 	else
 	{
