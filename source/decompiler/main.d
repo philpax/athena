@@ -18,9 +18,9 @@ class Decompiler
 		this.generateTypes();
 	}
 
-	ScopeNode run()
+	Scope run()
 	{
-		auto rootNode = new ScopeNode;
+		auto rootNode = new Scope;
 		this.addDecls(rootNode);
 		return rootNode;
 	}
@@ -46,7 +46,7 @@ private:
 		generateSetOfTypes("uint");
 	}
 
-	void addDecls(ScopeNode rootNode)
+	void addDecls(Scope rootNode)
 	{
 		foreach (const decl; this.program.declarations)
 		{

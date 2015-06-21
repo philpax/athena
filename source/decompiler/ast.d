@@ -26,7 +26,7 @@ interface ASTNode
 	string toString();
 }
 
-class ScopeNode : ASTNode
+class Scope : ASTNode
 {
 	mixin ASTNodeBoilerplate;
 

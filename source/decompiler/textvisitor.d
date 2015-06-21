@@ -16,7 +16,7 @@ class TextVisitor : RecursiveVisitor
 	{
 	}
 
-	override void visit(ScopeNode node)
+	override void visit(Scope node)
 	{
 		foreach (statement; node.statements)
 			statement.accept(this);
