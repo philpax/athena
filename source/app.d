@@ -2,8 +2,6 @@ import std.stdio;
 import std.getopt;
 import std.exception;
 import std.file;
-import std.array;
-import std.range;
 
 import sm4.program;
 
@@ -17,10 +15,12 @@ void main(string[] args)
 {
 	bool process = true;
 	Mode mode = Mode.decompile;
+	bool dumpAST = false;
 
 	args.getopt(
 		"process", "Control whether to post-process the AST.", &process,
-		"mode", "Control whether to disassemble or decompile.", &mode);
+		"mode", "Control whether to disassemble or decompile.", &mode,
+		"dump-ast", "Control whether to dump the AST.", &dumpAST);
 
 	enforce(args.length > 1, "Expected a filename.");
 
@@ -37,9 +37,18 @@ void main(string[] args)
 		{
 		}
 
-		import decompiler.dumpvisitor;
-		auto dumpVisitor = new DumpVisitor;
-		rootNode.accept(dumpVisitor);
+		if (dumpAST)
+		{
+			import decompiler.dumpvisitor;
+			auto dumpVisitor = new DumpVisitor;
+			rootNode.accept(dumpVisitor);
+		}
+		else
+		{
+			import decompiler.textvisitor;
+			auto textVisitor = new TextVisitor;
+			rootNode.accept(textVisitor);
+		}
 	}
 	else
 	{

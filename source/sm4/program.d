@@ -97,12 +97,12 @@ struct Operand
 
 	Index[3] rawIndices;
 
-	@property Any[] values()
+	@property const(Any)[] values() const
 	{
 		return this.immValues[0..this.comps];
 	}
 
-	@property Index[] indices()
+	@property const(Index)[] indices() const
 	{
 		return this.rawIndices[0..this.numIndices];
 	}
@@ -123,7 +123,7 @@ struct Instruction
 	uint numOps;
 	Operand*[6] ops;
 
-	@property Operand*[] operands()
+	@property const(Operand*)[] operands() const
 	{
 		return this.ops[0..this.numOps];
 	}
@@ -171,16 +171,16 @@ struct Program
 		sm4_destroy_program(&this);
 	}
 
-	@property Declaration*[] declarations()
+	@property const(Declaration*)[] declarations() const
 	{
 		auto view = sm4_program_get_dcls(&this);
-		return (cast(Declaration**)view.data)[0..view.size];
+		return (cast(const(Declaration*)*)view.data)[0..view.size];
 	}
 
-	@property Instruction*[] instructions()
+	@property const(Instruction*)[] instructions() const
 	{
 		auto view = sm4_program_get_insns(&this);
-		return (cast(Instruction**)view.data)[0..view.size];
+		return (cast(const(Instruction*)*)view.data)[0..view.size];
 	}
 }
 
@@ -188,11 +188,11 @@ private:
 extern (C++):
 struct array_view
 {
-	void* data;
+	const(void)* data;
 	uint size;
 }
 
 void* sm4_parse_file(ubyte* data, uint size);
 void sm4_destroy_program(void* program);
-array_view sm4_program_get_dcls(void* program);
-array_view sm4_program_get_insns(void* program);
+array_view sm4_program_get_dcls(const(void)* program);
+array_view sm4_program_get_insns(const(void)* program);

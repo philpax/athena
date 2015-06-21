@@ -10,7 +10,7 @@ import std.uni : toLower;
 import sm4.program;
 import sm4.def;
 
-void dump(Operand* operand, OpcodeType type = OpcodeType.FLOAT)
+void dump(const(Operand)* operand, OpcodeType type = OpcodeType.FLOAT)
 {
 	if (operand.neg) write("-");
 	if (operand.abs) write("|");
@@ -108,9 +108,18 @@ void dump(Operand* operand, OpcodeType type = OpcodeType.FLOAT)
 	}
 }
 
-void dump(Declaration* declaration)
+void dump(const(Declaration)* declaration)
 {
 	OpcodeNames[declaration.opcode].write();
+
+	switch (declaration.opcode)
+	{
+	case Opcode.DCL_TEMPS:
+		write(' ', declaration.num);
+		break;
+	default:
+		break;
+	}
 	
 	if (declaration.op)
 	{
@@ -121,7 +130,7 @@ void dump(Declaration* declaration)
 	writeln();
 }
 
-void dump(Instruction* instruction)
+void dump(const(Instruction)* instruction)
 {
 	OpcodeNames[instruction.opcode].write();
 

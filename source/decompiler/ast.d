@@ -1,6 +1,7 @@
 module decompiler.ast;
 
 import std.typetuple;
+import decompiler.type;
 
 // AST nodes
 mixin template ASTNodeBoilerplate()
@@ -22,6 +23,7 @@ mixin template ASTNodeBoilerplate()
 interface ASTNode
 {
 	void accept(ASTVisitor visitor);
+	string toString();
 }
 
 class ScopeNode : ASTNode
@@ -29,6 +31,26 @@ class ScopeNode : ASTNode
 	mixin ASTNodeBoilerplate;
 
 	ASTNode[] statements;
+	Variable[string] variables;
+
+	final void addVariable(Variable variable, bool addDecl = true)
+	{
+		this.variables[variable.name] = variable;
+		if (addDecl)
+			this.statements ~= new Statement(new VariableDecl(variable));
+	}
+}
+
+class Statement : ASTNode
+{
+	mixin ASTNodeBoilerplate;
+
+	ASTNode expr;
+
+	this(ASTNode expr)
+	{
+		this.expr = expr;
+	}
 }
 
 class BinaryExpr : ASTNode
@@ -37,6 +59,30 @@ class BinaryExpr : ASTNode
 
 	ASTNode lhs;
 	ASTNode rhs;
+}
+
+class Variable
+{
+	Type type;
+	string name;
+
+	this(Type type, string name)
+	{
+		this.type = type;
+		this.name = name;
+	}
+}
+
+class VariableDecl : ASTNode
+{
+	mixin ASTNodeBoilerplate;
+
+	Variable variable;
+
+	this(Variable variable)
+	{
+		this.variable = variable;
+	}
 }
 
 // AST visitor
