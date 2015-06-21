@@ -87,23 +87,7 @@ void dump(const(Operand)* operand, OpcodeType type = OpcodeType.FLOAT)
 		if (operand.comps)
 		{
 			write('.');
-			final switch (operand.mode)
-			{
-			case OperandMode.MASK:
-				operand.comps.iota()
-							 .filter!(i => operand.mask & (1 << i))
-							 .map!(i => "xyzw"[i])
-							 .write();
-				break;
-			case OperandMode.SWIZZLE:
-				operand.comps.iota()
-							 .map!(i => "xyzw"[operand.swizzle[i]])
-							 .write();
-				break;
-			case OperandMode.SCALAR:
-				write("xyzw"[operand.swizzle.front]);
-				break;
-			}
+			operand.staticIndex.map!(a => "xyzw"[a]).write();
 		}
 	}
 }

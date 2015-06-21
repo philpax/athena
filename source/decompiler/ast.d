@@ -41,6 +41,18 @@ class Scope : ASTNode
 	}
 }
 
+class Structure : Scope
+{
+	mixin ASTNodeBoilerplate;
+
+	string name;
+
+	this(string name)
+	{
+		this.name = name;
+	}
+}
+
 class Statement : ASTNode
 {
 	mixin ASTNodeBoilerplate;

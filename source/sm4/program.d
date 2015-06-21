@@ -106,6 +106,25 @@ struct Operand
 	{
 		return this.rawIndices[0..this.numIndices];
 	}
+
+	@property const(ubyte)[] staticIndex() const
+	{
+		import std.range : iota;
+		import std.algorithm : filter;
+		import std.array : array, front;
+
+		final switch (this.mode)
+		{
+		case OperandMode.MASK:
+			return this.comps.iota()
+							 .filter!(i => this.mask & (1 << i))
+							 .array();
+		case OperandMode.SWIZZLE:
+			return this.swizzle;
+		case OperandMode.SCALAR:
+			return [this.swizzle.front];
+		}
+	}
 }
 
 static assert(Operand.sizeof == 112);
