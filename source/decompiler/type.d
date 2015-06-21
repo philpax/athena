@@ -1,5 +1,7 @@
 module decompiler.type;
 
+import decompiler.ast : Structure;
+
 class Type
 {
 	string name;
@@ -27,5 +29,16 @@ class VectorType : Type
 
 		import std.conv : to;
 		super(this.type.toString() ~ this.size.to!string);
+	}
+}
+
+class StructureType : Type
+{
+	Structure type;
+
+	this(Structure type)
+	{
+		this.type = type;
+		super(type.toString());
 	}
 }

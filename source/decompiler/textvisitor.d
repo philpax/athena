@@ -18,10 +18,14 @@ class TextVisitor : RecursiveVisitor
 	{
 	}
 
+	// Scopes
 	override void visit(Scope node)
 	{
 		foreach (statement; node.statements)
+		{
 			statement.accept(this);
+			writeln();
+		}
 	}
 
 	override void visit(Structure node)
@@ -33,13 +37,44 @@ class TextVisitor : RecursiveVisitor
 		writefln("{");
 
 		depth++;
-		this.visit((cast(Structure.BaseType)node));
+		foreach (statement; node.statements)
+			statement.accept(this);
 		depth--;
 
 		writeSpaces();
 		writefln("};");
 	}
 
+	override void visit(Function node)
+	{
+		// Write signature
+		writeSpaces();
+		writef("%s %s(", node.returnType, node.name);
+		bool first = true;
+		foreach (argument; node.arguments)
+		{
+			if (!first)
+				write(", ");
+
+			argument.accept(this);
+			first = false;
+		}
+		writeln(")");
+
+		// Write body
+		writeSpaces();
+		writefln("{");
+
+		depth++;
+		foreach (statement; node.statements)
+			statement.accept(this);
+		depth--;
+
+		writeSpaces();
+		writefln("}");
+	}
+
+	// Statements
 	override void visit(Statement node)
 	{
 		writeSpaces();

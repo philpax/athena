@@ -51,6 +51,32 @@ class Structure : Scope
 	{
 		this.name = name;
 	}
+
+	override string toString()
+	{
+		return this.name;
+	}
+}
+
+class Function : Scope
+{
+	mixin ASTNodeBoilerplate;
+
+	Type returnType;
+	string name;
+	ASTNode[] arguments;
+
+	this(Type returnType, string name)
+	{
+		this.returnType = returnType;
+		this.name = name;
+	}
+
+	final void addArgument(Variable variable)
+	{
+		this.arguments ~= new VariableDecl(variable);
+		this.addVariable(variable, false);
+	}
 }
 
 class Statement : ASTNode

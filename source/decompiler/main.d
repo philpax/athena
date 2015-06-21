@@ -23,6 +23,7 @@ class Decompiler
 	{
 		auto rootNode = new Scope;
 		this.addDecls(rootNode);
+		this.addMainFunction(rootNode);
 		return rootNode;
 	}
 
@@ -55,17 +56,15 @@ private:
 		rootNode.statements ~= this.inputStruct;
 		rootNode.statements ~= this.outputStruct;
 
+		this.addStructureType(this.inputStruct);
+		this.addStructureType(this.outputStruct);
+
 		foreach (const decl; this.program.declarations)
 		{
 			switch (decl.opcode)
 			{
 			case Opcode.DCL_TEMPS:
-				foreach (i; 0..decl.num)
-				{
-					auto type = this.getVectorType("float", 4);
-					auto name = "r%s".format(i);
-					rootNode.addVariable(new Variable(type, name));
-				}
+				this.registerCount = decl.num;
 				break;
 			case Opcode.DCL_INPUT:
 			case Opcode.DCL_INPUT_SIV:
@@ -93,6 +92,26 @@ private:
 		}
 	}
 
+	void addMainFunction(Scope rootNode)
+	{
+		auto mainFn = new Function(this.types["ShaderOutput"], "main");
+		mainFn.addArgument(new Variable(this.types["ShaderInput"], "input"));
+		
+		foreach (i; 0..this.registerCount)
+		{
+			auto type = this.getVectorType("float", 4);
+			auto name = "r%s".format(i);
+			mainFn.addVariable(new Variable(type, name));
+		}
+
+		rootNode.statements ~= mainFn;
+	}
+
+	void addStructureType(Structure structure)
+	{
+		this.types[structure.name] = new StructureType(structure);
+	}
+
 	Type getVectorType(T)(string name, T size)
 		if (isIntegral!T)
 	{
@@ -104,4 +123,5 @@ private:
 	Structure inputStruct;
 	Structure outputStruct;
 	Type[string] types;
+	uint registerCount = 0;
 }
