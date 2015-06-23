@@ -83,9 +83,57 @@ class TextVisitor : RecursiveVisitor
 	}
 
 	// Expressions
-	override void visit(VariableDecl node)
+	override void visit(AssignExpr node)
+	{
+		node.lhs.accept(this);
+		write(" = ");
+		node.rhs.accept(this);
+	}
+
+	override void visit(DotExpr node)
+	{
+		node.lhs.accept(this);
+		write(".");
+		node.rhs.accept(this);
+	}
+
+	override void visit(SwizzleExpr node)
+	{
+		write(node.indices.map!(a => "xyzw"[a]));
+	}
+
+	override void visit(VariableAccessExpr node)
+	{
+		write(node.variable.name);
+	}
+
+	override void visit(VariableDeclExpr node)
 	{
 		writef("%s %s", node.variable.type.toString(), node.variable.name);
+	}
+
+	override void visit(CallExpr node)
+	{
+		bool first = true;
+
+		writef("(");
+		foreach (argument; node.arguments)
+		{
+			if (!first)
+				write(", ");
+
+			argument.accept(this);
+			first = false;
+		}
+		writef(")");
+	}
+
+	override void visit(InstructionCallExpr node)
+	{
+		import sm4.def : OpcodeNames;
+
+		write(OpcodeNames[node.opcode]);
+		this.visit(cast(node.BaseType)node);
 	}
 
 private:

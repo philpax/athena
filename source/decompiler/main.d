@@ -2,6 +2,7 @@ module decompiler.main;
 
 import decompiler.ast;
 import decompiler.type;
+import decompiler.value;
 
 import sm4.program;
 import sm4.def;
@@ -104,7 +105,44 @@ private:
 			mainFn.addVariable(new Variable(type, name));
 		}
 
+		foreach (instruction; program.instructions)
+		{
+			auto instructionCall = new InstructionCallExpr(instruction.opcode);
+			ASTNode node = instructionCall;
+
+			if (instruction.operands.length)
+			{
+				auto returnOperand = instruction.operands[0];
+				auto returnExpr = this.decompileOperand(mainFn, returnOperand);
+				if (returnExpr)
+				{
+					auto assignExpr = new AssignExpr(returnExpr, instructionCall);
+					node = assignExpr;
+				}
+			}
+			mainFn.statements ~= new Statement(node);
+		}
+
 		rootNode.statements ~= mainFn;
+	}
+
+	ASTNode decompileOperand(Scope currentScope, const(Operand*) operand)
+	{
+		switch (operand.file)
+		{
+		case FileType.TEMP:
+			auto variable = currentScope.variablesByIndex[operand.indices[0].disp];
+			auto register = new VariableAccessExpr(variable);
+			if (operand.comps)
+			{	
+				auto swizzle = new SwizzleExpr(operand.staticIndex);
+				auto dotExpr = new DotExpr(register, swizzle);
+				return dotExpr;
+			}
+			return register;
+		default:
+			return null;
+		}
 	}
 
 	void addStructureType(Structure structure)

@@ -1,7 +1,11 @@
 module decompiler.ast;
 
 import std.typetuple;
+
+import sm4.def : Opcode;
+
 import decompiler.type;
+import decompiler.value;
 
 // AST nodes
 mixin template ASTNodeBoilerplate()
@@ -32,12 +36,15 @@ class Scope : ASTNode
 
 	ASTNode[] statements;
 	Variable[string] variables;
+	Variable[] variablesByIndex;
 
-	final void addVariable(Variable variable, bool addDecl = true)
+	final void addVariable(Variable variable, bool addIndex = true, bool addDecl = true)
 	{
 		this.variables[variable.name] = variable;
+		if (addIndex)
+			this.variablesByIndex ~= variable;
 		if (addDecl)
-			this.statements ~= new Statement(new VariableDecl(variable));
+			this.statements ~= new Statement(new VariableDeclExpr(variable));
 	}
 }
 
@@ -74,8 +81,8 @@ class Function : Scope
 
 	final void addArgument(Variable variable)
 	{
-		this.arguments ~= new VariableDecl(variable);
-		this.addVariable(variable, false);
+		this.arguments ~= new VariableDeclExpr(variable);
+		this.addVariable(variable, false, false);
 	}
 }
 
@@ -91,27 +98,54 @@ class Statement : ASTNode
 	}
 }
 
+mixin template BinaryExprConstructor()
+{
+	this()
+	{
+	}
+
+	this(ASTNode lhs, ASTNode rhs)
+	{
+		this.lhs = lhs;
+		this.rhs = rhs;
+	}
+}
+
 class BinaryExpr : ASTNode
 {
 	mixin ASTNodeBoilerplate;
 
 	ASTNode lhs;
 	ASTNode rhs;
+
+	mixin BinaryExprConstructor;
 }
 
-class Variable
+class AssignExpr : BinaryExpr
 {
-	Type type;
-	string name;
+	mixin ASTNodeBoilerplate;
+	mixin BinaryExprConstructor;
+}
 
-	this(Type type, string name)
+class DotExpr : BinaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin BinaryExprConstructor;
+}
+
+class SwizzleExpr : ASTNode
+{
+	mixin ASTNodeBoilerplate;
+
+	const(ubyte)[] indices;
+
+	this(const(ubyte)[] indices)
 	{
-		this.type = type;
-		this.name = name;
+		this.indices = indices;
 	}
 }
 
-class VariableDecl : ASTNode
+class VariableAccessExpr : ASTNode
 {
 	mixin ASTNodeBoilerplate;
 
@@ -120,6 +154,42 @@ class VariableDecl : ASTNode
 	this(Variable variable)
 	{
 		this.variable = variable;
+	}
+}
+
+class VariableDeclExpr : VariableAccessExpr
+{
+	mixin ASTNodeBoilerplate;
+
+	this(Variable variable)
+	{
+		super(variable);
+	}
+}
+
+class CallExpr : ASTNode
+{
+	mixin ASTNodeBoilerplate;
+
+	ASTNode[] arguments;
+}
+
+class FunctionCallExpr : CallExpr
+{
+	mixin ASTNodeBoilerplate;
+
+	Function func;
+}
+
+class InstructionCallExpr : CallExpr
+{
+	mixin ASTNodeBoilerplate;
+
+	Opcode opcode;
+
+	this(Opcode opcode)
+	{
+		this.opcode = opcode;
 	}
 }
 
