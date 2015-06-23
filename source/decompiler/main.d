@@ -105,6 +105,8 @@ private:
 			mainFn.addVariable(new Variable(type, name));
 		}
 
+		mainFn.addVariable(new Variable(this.types["ShaderOutput"], "output"));
+
 		foreach (instruction; program.instructions)
 		{
 			auto instructionCall = new InstructionCallExpr(instruction.opcode);
@@ -128,18 +130,39 @@ private:
 
 	ASTNode decompileOperand(Scope currentScope, const(Operand*) operand)
 	{
+		ASTNode generateVariableExpr(Variable variable)
+		{
+			auto variableExpr = new VariableAccessExpr(variable);
+			if (operand.comps)
+			{	
+				auto swizzle = new SwizzleExpr(operand.staticIndex);
+				auto dotExpr = new DotExpr(variableExpr, swizzle);
+				return dotExpr;
+			}
+			return variableExpr;
+		}
+
 		switch (operand.file)
 		{
 		case FileType.TEMP:
 			auto variable = currentScope.variablesByIndex[operand.indices[0].disp];
-			auto register = new VariableAccessExpr(variable);
-			if (operand.comps)
-			{	
-				auto swizzle = new SwizzleExpr(operand.staticIndex);
-				auto dotExpr = new DotExpr(register, swizzle);
-				return dotExpr;
-			}
-			return register;
+			return generateVariableExpr(variable);
+		case FileType.INPUT:
+			auto inputVariableExpr = new VariableAccessExpr(
+				currentScope.variables["input"]);
+
+			auto memberVariableExpr = generateVariableExpr(
+				this.inputStruct.variablesByIndex[operand.indices[0].disp]);
+
+			return new DotExpr(inputVariableExpr, memberVariableExpr);
+		case FileType.OUTPUT:
+			auto outputVariableExpr = new VariableAccessExpr(
+				currentScope.variables["output"]);
+			
+			auto memberVariableExpr = generateVariableExpr(
+				this.outputStruct.variablesByIndex[operand.indices[0].disp]);
+
+			return new DotExpr(outputVariableExpr, memberVariableExpr);
 		default:
 			return null;
 		}

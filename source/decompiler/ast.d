@@ -30,6 +30,7 @@ interface ASTNode
 	string toString();
 }
 
+// Scopes
 class Scope : ASTNode
 {
 	mixin ASTNodeBoilerplate;
@@ -86,6 +87,7 @@ class Function : Scope
 	}
 }
 
+// Statements
 class Statement : ASTNode
 {
 	mixin ASTNodeBoilerplate;
@@ -98,6 +100,7 @@ class Statement : ASTNode
 	}
 }
 
+// Expressions
 mixin template BinaryExprConstructor()
 {
 	this()
