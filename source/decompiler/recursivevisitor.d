@@ -25,7 +25,7 @@ private string generateRecursiveMethods()
 	foreach (NodeType; ASTNodes)
 	{
 		string[] statements;
-		foreach (member; __traits(allMembers, NodeType)) 
+		foreach (member; __traits(derivedMembers, NodeType)) 
 		{
 			alias Member = Identity!(__traits(getMember, NodeType, member));
 
