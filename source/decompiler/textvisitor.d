@@ -122,7 +122,11 @@ class TextVisitor : RecursiveVisitor
 			if (!first)
 				write(", ");
 
-			argument.accept(this);
+			if (argument)
+				argument.accept(this);
+			else
+				write("UNHANDLED");
+			
 			first = false;
 		}
 		writef(")");

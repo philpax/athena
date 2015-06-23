@@ -8,6 +8,7 @@ import sm4.program;
 import sm4.def;
 
 import std.algorithm;
+import std.range;
 import std.stdio;
 import std.string;
 import std.traits;
@@ -121,6 +122,9 @@ private:
 					auto assignExpr = new AssignExpr(returnExpr, instructionCall);
 					node = assignExpr;
 				}
+
+				foreach (operand; instruction.operands.dropOne())
+					instructionCall.arguments ~= this.decompileOperand(mainFn, operand);
 			}
 			mainFn.statements ~= new Statement(node);
 		}
