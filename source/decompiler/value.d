@@ -5,28 +5,31 @@ import decompiler.type;
 class Value
 {
 	Type type;
+
+	this(Type type)
+	{
+		this.type = type;
+	}
 }
 
 class Variable : Value
 {
-	Type type;
 	string name;
 
 	this(Type type, string name)
 	{
-		this.type = type;
+		super(type);
 		this.name = name;
 	}
 }
 
 class Immediate(T) : Value
 {
-	Type type;
 	T[] value;
 
 	this(Type type)
 	{
-		this.type = type;
+		super(type);
 	}
 
 	override string toString()
