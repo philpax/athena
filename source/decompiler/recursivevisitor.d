@@ -32,7 +32,7 @@ private string generateRecursiveMethods()
 			static if (is(typeof(Member) : ASTNode))
 				statements ~= `node.%s.accept(this);`.format(Member.stringof);
 			static if (is(typeof(Member) : ASTNode[]))
-				statements ~= `node.%s.each!(a => a.accept(this));`.format(Member.stringof);
+				statements ~= `foreach (a; node.%s) { if (a) a.accept(this); }`.format(Member.stringof);
 		}
 
 		if (statements.length)
