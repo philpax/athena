@@ -19,6 +19,7 @@ class Decompiler
 	{
 		this.program = program;
 		this.generateTypes();
+		this.generateFunctions();
 	}
 
 	Scope run()
@@ -48,6 +49,22 @@ private:
 		generateSetOfTypes("float");
 		generateSetOfTypes("int");
 		generateSetOfTypes("uint");
+
+		// TODO: Automated checking for this type.
+		// It acts as a glue type for AST construction.
+		this.types["Any"] = new Type("Any");
+	}
+
+	void generateFunctions()
+	{
+		auto any = this.types["Any"];
+		void makeUnaryFunction(string name)
+		{
+			this.globalFunctions[name] = new Function(any, name);
+		}
+
+		makeUnaryFunction("abs");
+		makeUnaryFunction("saturate");
 	}
 
 	void addDecls(Scope rootNode)
@@ -110,26 +127,34 @@ private:
 
 		foreach (instruction; program.instructions)
 		{
-			auto instructionCall = new InstructionCallExpr(instruction.opcode);
-			ASTNode node = instructionCall;
-
-			if (instruction.operands.length)
-			{
-				auto returnOperand = instruction.operands[0];
-				auto returnExpr = this.decompileOperand(mainFn, returnOperand);
-				if (returnExpr)
-				{
-					auto assignExpr = new AssignExpr(returnExpr, instructionCall);
-					node = assignExpr;
-				}
-
-				foreach (operand; instruction.operands.dropOne())
-					instructionCall.arguments ~= this.decompileOperand(mainFn, operand);
-			}
-			mainFn.statements ~= new Statement(node);
+			mainFn.statements ~= new Statement(
+				this.decompileInstruction(mainFn, instruction));
 		}
 
 		rootNode.statements ~= mainFn;
+	}
+
+	ASTNode decompileInstruction(Scope currentScope, const(Instruction*) instruction)
+	{
+		auto instructionCall = new InstructionCallExpr(instruction.opcode);
+		ASTNode node = instructionCall;
+
+		if (instruction.instruction.sat)
+			node = new FunctionCallExpr(this.globalFunctions["saturate"], node);
+
+		if (instruction.operands.length)
+		{
+			auto returnOperand = instruction.operands[0];
+			auto returnExpr = this.decompileOperand(currentScope, returnOperand);
+			
+			if (returnExpr)
+				node = new AssignExpr(returnExpr, node);
+
+			foreach (operand; instruction.operands.dropOne())
+				instructionCall.arguments ~= this.decompileOperand(currentScope, operand);
+		}
+
+		return node;
 	}
 
 	ASTNode decompileOperand(Scope currentScope, const(Operand*) operand)
@@ -146,11 +171,24 @@ private:
 			return variableExpr;
 		}
 
+		ASTNode addModifiers(ASTNode node)
+		{
+			if (operand.abs)
+				node = new FunctionCallExpr(this.globalFunctions["abs"], node);
+
+			if (operand.neg)
+				node = new NegateExpr(node);
+
+			return node;
+		}
+
 		switch (operand.file)
 		{
 		case FileType.TEMP:
 			auto variable = currentScope.variablesByIndex[operand.indices[0].disp];
-			return generateVariableExpr(variable);
+			auto newExpr = generateVariableExpr(variable);
+
+			return addModifiers(newExpr);
 		case FileType.INPUT:
 			auto inputVariableExpr = new VariableAccessExpr(
 				currentScope.variables["input"]);
@@ -158,7 +196,9 @@ private:
 			auto memberVariableExpr = generateVariableExpr(
 				this.inputStruct.variablesByIndex[operand.indices[0].disp]);
 
-			return new DotExpr(inputVariableExpr, memberVariableExpr);
+			auto newExpr = new DotExpr(inputVariableExpr, memberVariableExpr);
+
+			return addModifiers(newExpr);
 		case FileType.OUTPUT:
 			auto outputVariableExpr = new VariableAccessExpr(
 				currentScope.variables["output"]);
@@ -166,7 +206,9 @@ private:
 			auto memberVariableExpr = generateVariableExpr(
 				this.outputStruct.variablesByIndex[operand.indices[0].disp]);
 
-			return new DotExpr(outputVariableExpr, memberVariableExpr);
+			auto newExpr = new DotExpr(outputVariableExpr, memberVariableExpr);
+
+			return addModifiers(newExpr);
 		default:
 			return null;
 		}
@@ -188,5 +230,6 @@ private:
 	Structure inputStruct;
 	Structure outputStruct;
 	Type[string] types;
+	Function[string] globalFunctions;
 	uint registerCount = 0;
 }

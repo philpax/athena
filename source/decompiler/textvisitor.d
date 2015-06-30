@@ -83,6 +83,12 @@ class TextVisitor : RecursiveVisitor
 	}
 
 	// Expressions
+	override void visit(NegateExpr node)
+	{
+		write("-");
+		node.node.accept(this);
+	}
+
 	override void visit(AssignExpr node)
 	{
 		node.lhs.accept(this);
@@ -130,6 +136,12 @@ class TextVisitor : RecursiveVisitor
 			first = false;
 		}
 		writef(")");
+	}
+
+	override void visit(FunctionCallExpr node)
+	{
+		write(node.func.name);
+		this.visit(cast(node.BaseType)node);
 	}
 
 	override void visit(InstructionCallExpr node)

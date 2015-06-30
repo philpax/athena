@@ -101,6 +101,33 @@ class Statement : ASTNode
 }
 
 // Expressions
+mixin template UnaryExprConstructor()
+{
+	this()
+	{
+	}
+
+	this(ASTNode node)
+	{
+		this.node = node;
+	}
+}
+
+class UnaryExpr : ASTNode
+{
+	mixin ASTNodeBoilerplate;
+
+	ASTNode node;
+
+	mixin UnaryExprConstructor;
+}
+
+class NegateExpr : UnaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin UnaryExprConstructor;
+}
+
 mixin template BinaryExprConstructor()
 {
 	this()
@@ -182,6 +209,12 @@ class FunctionCallExpr : CallExpr
 	mixin ASTNodeBoilerplate;
 
 	Function func;
+
+	this(Function func, ASTNode[] arguments...)
+	{
+		this.func = func;
+		this.arguments = arguments.dup;
+	}
 }
 
 class InstructionCallExpr : CallExpr
@@ -190,9 +223,10 @@ class InstructionCallExpr : CallExpr
 
 	Opcode opcode;
 
-	this(Opcode opcode)
+	this(Opcode opcode, ASTNode[] arguments...)
 	{
 		this.opcode = opcode;
+		this.arguments = arguments.dup;
 	}
 }
 
