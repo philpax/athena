@@ -124,24 +124,61 @@ private:
 		}
 
 		mainFn.addVariable(new Variable(this.types["ShaderOutput"], "output"));
-
-		foreach (instruction; program.instructions)
-		{
-			mainFn.statements ~= new Statement(
-				this.decompileInstruction(mainFn, instruction));
-		}
-
+		this.addInstructions(mainFn);
 		rootNode.statements ~= mainFn;
+	}
+
+	void addInstructions(Function fn)
+	{
+		Scope currentScope = fn;
+
+		foreach (instruction; this.program.instructions)
+		{
+			switch (instruction.opcode)
+			{
+			case Opcode.RET:
+				auto variableAccessExpr = 
+					new VariableAccessExpr(currentScope.getVariable("output"));
+
+				currentScope.statements ~= 
+					new Statement(new ReturnExpr(variableAccessExpr));
+
+				break;
+			case Opcode.IF:
+				auto operand = this.decompileOperand(currentScope, instruction.operands[0]);
+
+				if (instruction.instruction.testNz)
+					operand = new NotEqualExpr(operand, null);
+				else
+					operand = new EqualExpr(operand, null);
+
+				auto ifScope = new IfStatement(currentScope, operand);
+
+				currentScope.statements ~= ifScope;
+				currentScope = ifScope;
+
+				break;
+			case Opcode.ELSE:
+				currentScope = currentScope.parent;
+				auto elseScope = new ElseStatement(currentScope);
+
+				currentScope.statements ~= elseScope;
+				currentScope = elseScope;
+
+				break;
+			case Opcode.ENDIF:
+				currentScope = currentScope.parent;
+
+				break;
+			default:
+				currentScope.statements ~= new Statement(
+					this.decompileInstruction(currentScope, instruction));
+			}
+		}
 	}
 
 	ASTNode decompileInstruction(Scope currentScope, const(Instruction*) instruction)
 	{
-		if (instruction.opcode == Opcode.RET)
-		{
-			return new ReturnExpr(
-				new VariableAccessExpr(currentScope.variables["output"]));
-		}
-
 		auto instructionCall = new InstructionCallExpr(instruction.opcode);
 		ASTNode node = instructionCall;
 
@@ -191,13 +228,14 @@ private:
 		switch (operand.file)
 		{
 		case FileType.TEMP:
-			auto variable = currentScope.variablesByIndex[operand.indices[0].disp];
+			auto index = operand.indices[0].disp;
+			auto variable = currentScope.getVariable("r%s".format(index));
 			auto newExpr = generateVariableExpr(variable);
 
 			return addModifiers(newExpr);
 		case FileType.INPUT:
 			auto inputVariableExpr = new VariableAccessExpr(
-				currentScope.variables["input"]);
+				currentScope.getVariable("input"));
 
 			auto memberVariableExpr = generateVariableExpr(
 				this.inputStruct.variablesByIndex[operand.indices[0].disp]);
@@ -207,7 +245,7 @@ private:
 			return addModifiers(newExpr);
 		case FileType.OUTPUT:
 			auto outputVariableExpr = new VariableAccessExpr(
-				currentScope.variables["output"]);
+				currentScope.getVariable("output"));
 			
 			auto memberVariableExpr = generateVariableExpr(
 				this.outputStruct.variablesByIndex[operand.indices[0].disp]);

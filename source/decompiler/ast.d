@@ -35,6 +35,7 @@ class Scope : ASTNode
 {
 	mixin ASTNodeBoilerplate;
 
+	Scope parent;
 	ASTNode[] statements;
 	Variable[string] variables;
 	Variable[] variablesByIndex;
@@ -46,6 +47,18 @@ class Scope : ASTNode
 			this.variablesByIndex ~= variable;
 		if (addDecl)
 			this.statements ~= new Statement(new VariableDeclExpr(variable));
+	}
+
+	final Variable getVariable(string name)
+	{
+		auto variablePtr = name in variables;
+		if (variablePtr)
+			return *variablePtr;
+
+		if (this.parent)
+			return this.parent.getVariable(name);
+		else
+			return null;
 	}
 }
 
@@ -100,7 +113,31 @@ class Statement : ASTNode
 	}
 }
 
+class IfStatement : Scope
+{
+	mixin ASTNodeBoilerplate;
+
+	ASTNode expr;
+
+	this(Scope parent, ASTNode expr)
+	{
+		this.parent = parent;
+		this.expr = expr;
+	}
+}
+
+class ElseStatement : Scope
+{
+	mixin ASTNodeBoilerplate;
+
+	this(Scope parent)
+	{
+		this.parent = parent;
+	}
+}
+
 // Expressions
+// UnaryExpr
 mixin template UnaryExprConstructor()
 {
 	this()
@@ -134,6 +171,7 @@ class ReturnExpr : UnaryExpr
 	mixin UnaryExprConstructor;
 }
 
+// BinaryExpr
 mixin template BinaryExprConstructor()
 {
 	this()
@@ -169,6 +207,19 @@ class DotExpr : BinaryExpr
 	mixin BinaryExprConstructor;
 }
 
+class EqualExpr : BinaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin BinaryExprConstructor;
+}
+
+class NotEqualExpr : BinaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin BinaryExprConstructor;
+}
+
+// Other expressions
 class SwizzleExpr : ASTNode
 {
 	mixin ASTNodeBoilerplate;

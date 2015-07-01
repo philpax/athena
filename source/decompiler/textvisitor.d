@@ -28,21 +28,34 @@ class TextVisitor : RecursiveVisitor
 		}
 	}
 
-	override void visit(Structure node)
+	final void visitScope(Scope node)
 	{
-		writeSpaces();
-		writefln("struct %s", node.name);
+		auto writeBraces = node.statements.length > 1;
 
-		writeSpaces();
-		writefln("{");
+		if (writeBraces)
+		{
+			writeSpaces();
+			writefln("{");			
+		}
 
 		depth++;
 		foreach (statement; node.statements)
 			statement.accept(this);
 		depth--;
 
+		if (writeBraces)
+		{
+			writeSpaces();
+			writefln("}");			
+		}
+	}
+
+	override void visit(Structure node)
+	{
 		writeSpaces();
-		writefln("};");
+		writefln("struct %s", node.name);
+
+		this.visitScope(node);
 	}
 
 	override void visit(Function node)
@@ -61,17 +74,7 @@ class TextVisitor : RecursiveVisitor
 		}
 		writeln(")");
 
-		// Write body
-		writeSpaces();
-		writefln("{");
-
-		depth++;
-		foreach (statement; node.statements)
-			statement.accept(this);
-		depth--;
-
-		writeSpaces();
-		writefln("}");
+		this.visitScope(node);
 	}
 
 	// Statements
@@ -82,7 +85,29 @@ class TextVisitor : RecursiveVisitor
 		writeln(";");
 	}
 
+	override void visit(IfStatement node)
+	{
+		writeSpaces();
+		write("if (");
+		if (node.expr)
+			node.expr.accept(this);
+		else
+			write("UNHANDLED");
+		writeln(")");
+
+		this.visitScope(node);
+	}
+
+	override void visit(ElseStatement node)
+	{
+		writeSpaces();
+		writeln("else");
+
+		this.visitScope(node);
+	}
+
 	// Expressions
+	// UnaryExpr
 	override void visit(NegateExpr node)
 	{
 		write("-");
@@ -99,6 +124,7 @@ class TextVisitor : RecursiveVisitor
 		}
 	}
 
+	// BinaryExpr
 	override void visit(AssignExpr node)
 	{
 		node.lhs.accept(this);
@@ -113,6 +139,37 @@ class TextVisitor : RecursiveVisitor
 		node.rhs.accept(this);
 	}
 
+	override void visit(EqualExpr node)
+	{
+		if (node.lhs)
+			node.lhs.accept(this);
+		else
+			write("UNHANDLED");
+
+		write(" == ");
+
+		if (node.rhs)
+			node.rhs.accept(this);
+		else
+			write("UNHANDLED");
+	}
+
+	override void visit(NotEqualExpr node)
+	{
+		if (node.lhs)
+			node.lhs.accept(this);
+		else
+			write("UNHANDLED");
+
+		write(" != ");
+
+		if (node.rhs)
+			node.rhs.accept(this);
+		else
+			write("UNHANDLED");
+	}
+
+	// Other expressions
 	override void visit(SwizzleExpr node)
 	{
 		write(node.indices.map!(a => "xyzw"[a]));
