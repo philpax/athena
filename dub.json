@@ -4,7 +4,9 @@
 	"copyright": "Copyright © 2015, Mithun",
 	"authors": ["Mithun"],
 	"dependencies": {},
-	"lflags-linux": ["-lstdc++"],
+
 	"sourceFiles-linux": ["fxdis-d3d1x/libfxdis-d3d1x.a"],
-	"sourceFiles-windows-x86_64": ["fxdis-d3d1x/fxdis.lib"]
+	"sourceFiles-windows-x86_64": ["fxdis-d3d1x/fxdis-d3d1x.lib"],
+
+	"lflags-linux": ["-lstdc++"]
 }
