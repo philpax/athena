@@ -89,6 +89,16 @@ class TextVisitor : RecursiveVisitor
 		node.node.accept(this);
 	}
 
+	override void visit(ReturnExpr node)
+	{
+		write("return");
+		if (node.node)
+		{
+			write(" ");
+			node.node.accept(this);
+		}
+	}
+
 	override void visit(AssignExpr node)
 	{
 		node.lhs.accept(this);

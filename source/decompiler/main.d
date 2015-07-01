@@ -136,6 +136,12 @@ private:
 
 	ASTNode decompileInstruction(Scope currentScope, const(Instruction*) instruction)
 	{
+		if (instruction.opcode == Opcode.RET)
+		{
+			return new ReturnExpr(
+				new VariableAccessExpr(currentScope.variables["output"]));
+		}
+
 		auto instructionCall = new InstructionCallExpr(instruction.opcode);
 		ASTNode node = instructionCall;
 
@@ -146,7 +152,7 @@ private:
 		{
 			auto returnOperand = instruction.operands[0];
 			auto returnExpr = this.decompileOperand(currentScope, returnOperand);
-			
+
 			if (returnExpr)
 				node = new AssignExpr(returnExpr, node);
 

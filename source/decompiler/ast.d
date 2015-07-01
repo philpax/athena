@@ -128,6 +128,12 @@ class NegateExpr : UnaryExpr
 	mixin UnaryExprConstructor;
 }
 
+class ReturnExpr : UnaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin UnaryExprConstructor;
+}
+
 mixin template BinaryExprConstructor()
 {
 	this()
