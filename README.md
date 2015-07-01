@@ -19,6 +19,8 @@ The AST is made up of several different classes, some of which only exist in int
 		* `Structure`: Represents a structure.
 		* `Function`: Represents a function. Contains return type, as well as arguments.
 	* `Statement`: Represents a statement of any kind. Stores an arbitrary `ASTNode`.
+	* `UnaryExpr`: Represents any expression with one operand.
+		* `NegateExpr`: Represents a negation (`-a`)
 	* `BinaryExpr`: Represents any expression with two operands.
 		* `AssignExpr`: Represents an assignment (`a = b`)
 		* `DotExpr`: Represents a variable internal access (`a.b`)
@@ -30,11 +32,12 @@ The AST is made up of several different classes, some of which only exist in int
 		* `InstructionCallExpr`: Represents an instruction. Contains an `Opcode`.
 
 ## Building
-Athena currently only works with DMD 64-bit on Windows. This is due to the dependence on fxdis; in future, fxdis may be ported to work on other platforms/compilers.
+Athena currently works on 64-bit Windows and Linux. It should be possible to make it build on 32-bit, but using DMD to link with MSCOFF32 objects (as emitted by the Visual Studio compiler) is not a simple process.
 
-1. Build fxdis-d3d11 in 64-bit mode as a library in Release mode.
-2. Copy the resulting library to the root of the fxdis folder (i.e. fxdis-d3d1x/fxdis.lib).
-3. Build Athena using `dub build --arch=x86_64`.
+1. Pull down fxdis-d3d11 with `git submodule init` and `git submodule update`.
+2. Go into the fxdis-d3d11 directory, and use premake5 to create the requisite build files.
+3. Build fxdis-d3d11 in 64-bit mode. If on Windows, build as Release mode (due to DMD linking against libcmt.lib).
+4. Build Athena using `dub build --arch=x86_64`.
 
 ## Running
 If running separately:
