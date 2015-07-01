@@ -7,6 +7,14 @@ import std.stdio;
 import std.algorithm;
 import std.range;
 
+void tryAccept(ASTNode node, RecursiveVisitor visitor)
+{
+	if (node)
+		node.accept(visitor);
+	else
+		write("UNHANDLED");
+}
+
 class TextVisitor : RecursiveVisitor
 {
 	alias visit = RecursiveVisitor.visit;
@@ -23,7 +31,7 @@ class TextVisitor : RecursiveVisitor
 	{
 		foreach (statement; node.statements)
 		{
-			statement.accept(this);
+			statement.tryAccept(this);
 			writeln();
 		}
 	}
@@ -40,7 +48,7 @@ class TextVisitor : RecursiveVisitor
 
 		depth++;
 		foreach (statement; node.statements)
-			statement.accept(this);
+			statement.tryAccept(this);
 		depth--;
 
 		if (writeBraces)
@@ -69,7 +77,7 @@ class TextVisitor : RecursiveVisitor
 			if (!first)
 				write(", ");
 
-			argument.accept(this);
+			argument.tryAccept(this);
 			first = false;
 		}
 		writeln(")");
@@ -81,7 +89,7 @@ class TextVisitor : RecursiveVisitor
 	override void visit(Statement node)
 	{
 		writeSpaces();
-		node.expr.accept(this);
+		node.expr.tryAccept(this);
 		writeln(";");
 	}
 
@@ -89,10 +97,7 @@ class TextVisitor : RecursiveVisitor
 	{
 		writeSpaces();
 		write("if (");
-		if (node.expr)
-			node.expr.accept(this);
-		else
-			write("UNHANDLED");
+		node.expr.tryAccept(this);
 		writeln(")");
 
 		this.visitScope(node);
@@ -111,7 +116,7 @@ class TextVisitor : RecursiveVisitor
 	override void visit(NegateExpr node)
 	{
 		write("-");
-		node.node.accept(this);
+		node.node.tryAccept(this);
 	}
 
 	override void visit(ReturnExpr node)
@@ -120,53 +125,37 @@ class TextVisitor : RecursiveVisitor
 		if (node.node)
 		{
 			write(" ");
-			node.node.accept(this);
+			node.node.tryAccept(this);
 		}
 	}
 
 	// BinaryExpr
 	override void visit(AssignExpr node)
 	{
-		node.lhs.accept(this);
+		node.lhs.tryAccept(this);
 		write(" = ");
-		node.rhs.accept(this);
+		node.rhs.tryAccept(this);
 	}
 
 	override void visit(DotExpr node)
 	{
-		node.lhs.accept(this);
+		node.lhs.tryAccept(this);
 		write(".");
-		node.rhs.accept(this);
+		node.rhs.tryAccept(this);
 	}
 
 	override void visit(EqualExpr node)
 	{
-		if (node.lhs)
-			node.lhs.accept(this);
-		else
-			write("UNHANDLED");
-
+		node.lhs.tryAccept(this);
 		write(" == ");
-
-		if (node.rhs)
-			node.rhs.accept(this);
-		else
-			write("UNHANDLED");
+		node.rhs.tryAccept(this);
 	}
 
 	override void visit(NotEqualExpr node)
 	{
-		if (node.lhs)
-			node.lhs.accept(this);
-		else
-			write("UNHANDLED");
-
+		node.lhs.tryAccept(this);
 		write(" != ");
-
-		if (node.rhs)
-			node.rhs.accept(this);
-		else
-			write("UNHANDLED");
+		node.rhs.tryAccept(this);
 	}
 
 	// Other expressions
@@ -195,11 +184,7 @@ class TextVisitor : RecursiveVisitor
 			if (!first)
 				write(", ");
 
-			if (argument)
-				argument.accept(this);
-			else
-				write("UNHANDLED");
-			
+			argument.tryAccept(this);			
 			first = false;
 		}
 		writef(")");
