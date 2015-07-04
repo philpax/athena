@@ -35,7 +35,7 @@ class Scope : ASTNode
 {
 	mixin ASTNodeBoilerplate;
 
-	Scope parent;
+	@("NoRecursiveVisit") Scope parent;
 	ASTNode[] statements;
 	Variable[string] variables;
 	Variable[] variablesByIndex;
@@ -75,7 +75,7 @@ class Structure : Scope
 
 	override string toString()
 	{
-		return this.name;
+		return typeof(this).stringof ~ ": " ~ this.name;
 	}
 }
 
@@ -97,6 +97,11 @@ class Function : Scope
 	{
 		this.arguments ~= new VariableDeclExpr(variable);
 		this.addVariable(variable, false, false);
+	}
+
+	override string toString()
+	{
+		return typeof(this).stringof ~ ": " ~ this.name;
 	}
 }
 
@@ -230,6 +235,15 @@ class SwizzleExpr : ASTNode
 	{
 		this.indices = indices;
 	}
+
+	override string toString()
+	{
+		import std.algorithm : map;
+		import std.array : array;
+
+		return typeof(this).stringof ~ ": " ~ 
+			this.indices.map!(a => "xyzw"[a]).array();
+	}
 }
 
 class VariableAccessExpr : ASTNode
@@ -242,6 +256,11 @@ class VariableAccessExpr : ASTNode
 	{
 		this.variable = variable;
 	}
+
+	override string toString()
+	{
+		return typeof(this).stringof ~ ": " ~ this.variable.name;
+	}
 }
 
 class VariableDeclExpr : VariableAccessExpr
@@ -251,6 +270,11 @@ class VariableDeclExpr : VariableAccessExpr
 	this(Variable variable)
 	{
 		super(variable);
+	}
+
+	override string toString()
+	{
+		return typeof(this).stringof ~ ": " ~ this.variable.name;	
 	}
 }
 
@@ -272,6 +296,11 @@ class FunctionCallExpr : CallExpr
 		this.func = func;
 		this.arguments = arguments.dup;
 	}
+
+	override string toString()
+	{
+		return typeof(this).stringof ~ ": " ~ this.func.name;
+	}
 }
 
 class InstructionCallExpr : CallExpr
@@ -284,6 +313,12 @@ class InstructionCallExpr : CallExpr
 	{
 		this.opcode = opcode;
 		this.arguments = arguments.dup;
+	}
+
+	override string toString()
+	{
+		import sm4.def : OpcodeNames;
+		return typeof(this).stringof ~ ": " ~ OpcodeNames[opcode];
 	}
 }
 

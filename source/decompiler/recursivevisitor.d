@@ -20,6 +20,7 @@ private string generateRecursiveMethods()
 	import std.typecons : Identity;
 	import std.string : format;
 	import std.array : join;
+	import std.typetuple : staticIndexOf;
 	string ret;
 
 	foreach (NodeType; ASTNodes)
@@ -29,10 +30,13 @@ private string generateRecursiveMethods()
 		{
 			alias Member = Identity!(__traits(getMember, NodeType, member));
 
-			static if (is(typeof(Member) : ASTNode))
-				statements ~= `node.%s.accept(this);`.format(Member.stringof);
-			static if (is(typeof(Member) : ASTNode[]))
-				statements ~= `foreach (a; node.%s) { if (a) a.accept(this); }`.format(Member.stringof);
+			static if (staticIndexOf!("NoRecursiveVisit", __traits(getAttributes, Member)) == -1)
+			{
+				static if (is(typeof(Member) : ASTNode))
+					statements ~= `if (node.%s) node.%s.accept(this);`.format(Member.stringof, Member.stringof);
+				static if (is(typeof(Member) : ASTNode[]))
+					statements ~= `foreach (a; node.%s) { if (a) a.accept(this); }`.format(Member.stringof);
+			}
 		}
 
 		if (statements.length)
