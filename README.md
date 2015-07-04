@@ -18,12 +18,17 @@ The AST is made up of several different classes, some of which only exist in int
 	* `Scope`: Represents a scope of any kind. Contains an array of statements, an associative array of variables, and an array of variables by index.
 		* `Structure`: Represents a structure.
 		* `Function`: Represents a function. Contains return type, as well as arguments.
+		* `IfStatement`: Represents an if statement (`if (expr)`)
+		* `ElseStatement`: Represents an else statement (`else`)
 	* `Statement`: Represents a statement of any kind. Stores an arbitrary `ASTNode`.
 	* `UnaryExpr`: Represents any expression with one operand.
 		* `NegateExpr`: Represents a negation (`-a`)
+		* `ReturnExpr`: Represents a return (`return a`)
 	* `BinaryExpr`: Represents any expression with two operands.
 		* `AssignExpr`: Represents an assignment (`a = b`)
 		* `DotExpr`: Represents a variable internal access (`a.b`)
+		* `EqualExpr`: Represents an equality (`a == b`)
+		* `NotEqualExpr`: Represents an inequality (`a != b`)
 	* `SwizzleExpr`: Represents a swizzling operation. Contains an array of indices.
 	* `VariableAccessExpr`: Represents a variable being accessed. Contains a `Variable`.
 		* `VariableDeclExpr`: Represents a declaration of a variable.
