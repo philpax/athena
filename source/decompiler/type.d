@@ -39,6 +39,6 @@ class StructureType : Type
 	this(Structure type)
 	{
 		this.type = type;
-		super(type.toString());
+		super(type.name);
 	}
 }
