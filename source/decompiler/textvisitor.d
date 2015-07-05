@@ -174,6 +174,11 @@ class TextVisitor : RecursiveVisitor
 		writef("%s %s", node.variable.type.toString(), node.variable.name);
 	}
 
+	override void visit(ValueExpr node)
+	{
+		write(node.value.toString());
+	}
+
 	override void visit(CallExpr node)
 	{
 		bool first = true;

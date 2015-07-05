@@ -146,11 +146,13 @@ private:
 				break;
 			case Opcode.IF:
 				auto operand = this.decompileOperand(currentScope, instruction.operands[0]);
+				auto zero = new IntImmediate(this.types["int1"], 0);
+				auto valueExpr = new ValueExpr(zero);
 
 				if (instruction.instruction.testNz)
-					operand = new NotEqualExpr(operand, null);
+					operand = new NotEqualExpr(operand, valueExpr);
 				else
-					operand = new EqualExpr(operand, null);
+					operand = new EqualExpr(operand, valueExpr);
 
 				auto ifScope = new IfStatement(currentScope, operand);
 
@@ -179,7 +181,8 @@ private:
 
 	ASTNode decompileInstruction(Scope currentScope, const(Instruction*) instruction)
 	{
-		auto instructionCall = new InstructionCallExpr(instruction.opcode);
+		auto opcode = instruction.opcode;
+		auto instructionCall = new InstructionCallExpr(opcode);
 		ASTNode node = instructionCall;
 
 		if (instruction.instruction.sat)
@@ -187,20 +190,25 @@ private:
 
 		if (instruction.operands.length)
 		{
+			auto operandType = OpcodeTypes[opcode];
 			auto returnOperand = instruction.operands[0];
-			auto returnExpr = this.decompileOperand(currentScope, returnOperand);
+			auto returnExpr = this.decompileOperand(currentScope, returnOperand, operandType);
 
 			if (returnExpr)
 				node = new AssignExpr(returnExpr, node);
 
-			foreach (operand; instruction.operands.dropOne())
-				instructionCall.arguments ~= this.decompileOperand(currentScope, operand);
+			foreach (operand; instruction.operands[1..$])
+			{
+				auto operandNode = this.decompileOperand(currentScope, operand, operandType);
+				instructionCall.arguments ~= operandNode;
+			}
 		}
 
 		return node;
 	}
 
-	ASTNode decompileOperand(Scope currentScope, const(Operand*) operand)
+	ASTNode decompileOperand(
+		Scope currentScope, const(Operand*) operand, OpcodeType type = OpcodeType.FLOAT)
 	{
 		ASTNode generateVariableExpr(Variable variable)
 		{
@@ -225,14 +233,16 @@ private:
 			return node;
 		}
 
+		ASTNode newExpr;
+
 		switch (operand.file)
 		{
 		case FileType.TEMP:
 			auto index = operand.indices[0].disp;
 			auto variable = currentScope.getVariable("r%s".format(index));
-			auto newExpr = generateVariableExpr(variable);
 
-			return addModifiers(newExpr);
+			newExpr = generateVariableExpr(variable);
+			break;
 		case FileType.INPUT:
 			auto inputVariableExpr = new VariableAccessExpr(
 				currentScope.getVariable("input"));
@@ -240,9 +250,8 @@ private:
 			auto memberVariableExpr = generateVariableExpr(
 				this.inputStruct.variablesByIndex[operand.indices[0].disp]);
 
-			auto newExpr = new DotExpr(inputVariableExpr, memberVariableExpr);
-
-			return addModifiers(newExpr);
+			newExpr = new DotExpr(inputVariableExpr, memberVariableExpr);
+			break;
 		case FileType.OUTPUT:
 			auto outputVariableExpr = new VariableAccessExpr(
 				currentScope.getVariable("output"));
@@ -250,12 +259,33 @@ private:
 			auto memberVariableExpr = generateVariableExpr(
 				this.outputStruct.variablesByIndex[operand.indices[0].disp]);
 
-			auto newExpr = new DotExpr(outputVariableExpr, memberVariableExpr);
-
-			return addModifiers(newExpr);
+			newExpr = new DotExpr(outputVariableExpr, memberVariableExpr);
+			break;
+		case FileType.IMMEDIATE32:	
+			if (type == OpcodeType.INT)
+			{
+				auto values = operand.values.map!(a => a.i32).array();
+				auto vectorType = this.getVectorType("int", values.length);
+				newExpr = new ValueExpr(new IntImmediate(vectorType, values));
+			}
+			else if (type == OpcodeType.UINT)
+			{
+				auto values = operand.values.map!(a => a.u32).array();
+				auto vectorType = this.getVectorType("uint", values.length);
+				newExpr = new ValueExpr(new UIntImmediate(vectorType, values));
+			}
+			else
+			{
+				auto values = operand.values.map!(a => a.f32).array();
+				auto vectorType = this.getVectorType("float", values.length);
+				newExpr = new ValueExpr(new FloatImmediate(vectorType, values));				
+			}
+			break;
 		default:
 			return null;
 		}
+
+		return addModifiers(newExpr);
 	}
 
 	void addStructureType(Structure structure)

@@ -27,14 +27,25 @@ class Immediate(T) : Value
 {
 	T[] value;
 
-	this(Type type)
+	this(Type type, const(T)[] value...)
 	{
 		super(type);
+		this.value = value.dup;
 	}
 
 	override string toString()
 	{
 		import std.string : format, join;
-		return "%s(%s)".format(this.type, this.value.join(", "));
+		import std.conv : to;
+		import std.algorithm : map;
+
+		if (this.value.length > 1)
+			return "%s(%s)".format(this.type, this.value.map!(to!string).join(", "));
+		else
+			return this.value[0].to!string;
 	}
 }
+
+alias FloatImmediate = Immediate!float;
+alias IntImmediate = Immediate!int;
+alias UIntImmediate = Immediate!uint;

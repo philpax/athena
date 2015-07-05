@@ -278,6 +278,23 @@ class VariableDeclExpr : VariableAccessExpr
 	}
 }
 
+class ValueExpr : ASTNode
+{
+	mixin ASTNodeBoilerplate;
+
+	Value value;
+
+	this(Value value)
+	{
+		this.value = value;
+	}
+
+	override string toString()
+	{
+		return typeof(this).stringof ~ ": " ~ this.value.toString();
+	}
+}
+
 class CallExpr : ASTNode
 {
 	mixin ASTNodeBoilerplate;
