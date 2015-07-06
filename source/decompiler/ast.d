@@ -118,6 +118,16 @@ class Statement : ASTNode
 	}
 }
 
+class ReturnStatement : Statement
+{
+	mixin ASTNodeBoilerplate;
+
+	this(ASTNode expr)
+	{
+		super(expr);
+	}
+}
+
 class IfStatement : Scope
 {
 	mixin ASTNodeBoilerplate;
@@ -165,12 +175,6 @@ class UnaryExpr : ASTNode
 }
 
 class NegateExpr : UnaryExpr
-{
-	mixin ASTNodeBoilerplate;
-	mixin UnaryExprConstructor;
-}
-
-class ReturnExpr : UnaryExpr
 {
 	mixin ASTNodeBoilerplate;
 	mixin UnaryExprConstructor;

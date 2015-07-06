@@ -111,22 +111,24 @@ class TextVisitor : RecursiveVisitor
 		this.visitScope(node);
 	}
 
+	override void visit(ReturnStatement node)
+	{
+		writeSpaces();
+		write("return");
+		if (node.expr)
+		{
+			write(" ");
+			node.expr.tryAccept(this);
+		}
+		writeln(";");
+	}
+
 	// Expressions
 	// UnaryExpr
 	override void visit(NegateExpr node)
 	{
 		write("-");
 		node.node.tryAccept(this);
-	}
-
-	override void visit(ReturnExpr node)
-	{
-		write("return");
-		if (node.node)
-		{
-			write(" ");
-			node.node.tryAccept(this);
-		}
 	}
 
 	// BinaryExpr

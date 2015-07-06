@@ -140,8 +140,7 @@ private:
 				auto variableAccessExpr = 
 					new VariableAccessExpr(currentScope.getVariable("output"));
 
-				currentScope.statements ~= 
-					new Statement(new ReturnExpr(variableAccessExpr));
+				currentScope.statements ~= new ReturnStatement(variableAccessExpr);
 
 				break;
 			case Opcode.IF:
