@@ -225,13 +225,44 @@ private:
 	{
 		ASTNode generateVariableExpr(Variable variable)
 		{
-			auto variableExpr = new VariableAccessExpr(variable);
+			ASTNode variableExpr = new VariableAccessExpr(variable);
+
+			ASTNode makeIntegerImmediate(int v)
+			{
+				return new ValueExpr(new IntImmediate(this.types["int1"], v));
+			}
+
+			foreach (index; operand.indices[1..$])
+			{
+				auto dynamicIndexExpr = new DynamicIndexExpr(variableExpr, null);
+				ASTNode dispNode = null;
+
+				auto disp = cast(int)index.disp;
+
+				if (index.reg)
+				{
+					dynamicIndexExpr.index = this.decompileOperand(currentScope, index.reg, type);
+
+					if (disp)
+					{
+						dynamicIndexExpr.index = 
+							new AddExpr(dynamicIndexExpr.index, makeIntegerImmediate(disp));
+					}
+				}
+				else
+				{
+					dynamicIndexExpr.index = makeIntegerImmediate(disp);
+				}
+
+				variableExpr = dynamicIndexExpr;
+			}
+
 			if (operand.comps)
 			{	
 				auto swizzle = new SwizzleExpr(operand.staticIndex);
-				auto dotExpr = new DotExpr(variableExpr, swizzle);
-				return dotExpr;
+				variableExpr = new DotExpr(variableExpr, swizzle);
 			}
+
 			return variableExpr;
 		}
 

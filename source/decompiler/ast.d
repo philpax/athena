@@ -229,6 +229,12 @@ class AssignExpr : BinaryExpr
 	mixin BinaryExprConstructor;
 }
 
+class AddExpr : BinaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin BinaryExprConstructor;	
+}
+
 class DotExpr : BinaryExpr
 {
 	mixin ASTNodeBoilerplate;
@@ -298,6 +304,20 @@ class VariableDeclExpr : VariableAccessExpr
 	override string toString()
 	{
 		return typeof(this).stringof ~ ": " ~ this.variable.name;	
+	}
+}
+
+class DynamicIndexExpr : ASTNode
+{
+	mixin ASTNodeBoilerplate;
+
+	ASTNode base;
+	ASTNode index;
+
+	this(ASTNode base, ASTNode index)
+	{
+		this.base = base;
+		this.index = index;
 	}
 }
 

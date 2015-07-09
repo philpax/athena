@@ -146,6 +146,12 @@ class TextVisitor : RecursiveVisitor
 		write(" = ");
 		node.rhs.tryAccept(this);
 	}
+	override void visit(AddExpr node)
+	{
+		node.lhs.tryAccept(this);
+		write(" + ");
+		node.rhs.tryAccept(this);
+	}
 
 	override void visit(DotExpr node)
 	{
@@ -184,6 +190,14 @@ class TextVisitor : RecursiveVisitor
 		writef("%s %s", node.variable.type.toString(), node.variable.name);
 		if (node.variable.count > 1)
 			writef("[%s]", node.variable.count);
+	}
+
+	override void visit(DynamicIndexExpr node)
+	{
+		node.base.tryAccept(this);
+		write("[");
+		node.index.tryAccept(this);
+		write("]");
 	}
 
 	override void visit(ValueExpr node)
