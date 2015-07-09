@@ -36,9 +36,9 @@ class TextVisitor : RecursiveVisitor
 		}
 	}
 
-	final void visitScope(Scope node)
+	final void visitScope(Scope node, bool forceWriteBraces = false)
 	{
-		auto writeBraces = node.statements.length > 1;
+		auto writeBraces = forceWriteBraces || node.statements.length > 1;
 
 		if (writeBraces)
 		{
@@ -63,7 +63,15 @@ class TextVisitor : RecursiveVisitor
 		writeSpaces();
 		writefln("struct %s", node.name);
 
-		this.visitScope(node);
+		this.visitScope(node, true);
+	}
+
+	override void visit(ConstantBuffer node)
+	{
+		writeSpaces();
+		writefln("cbuffer %s : register(b%s)", node.name, node.index);
+
+		this.visitScope(node, true);
 	}
 
 	override void visit(Function node)
@@ -82,7 +90,7 @@ class TextVisitor : RecursiveVisitor
 		}
 		writeln(")");
 
-		this.visitScope(node);
+		this.visitScope(node, true);
 	}
 
 	// Statements
@@ -174,6 +182,8 @@ class TextVisitor : RecursiveVisitor
 	override void visit(VariableDeclExpr node)
 	{
 		writef("%s %s", node.variable.type.toString(), node.variable.name);
+		if (node.variable.count > 1)
+			writef("[%s]", node.variable.count);
 	}
 
 	override void visit(ValueExpr node)

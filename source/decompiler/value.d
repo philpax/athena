@@ -15,11 +15,13 @@ class Value
 class Variable : Value
 {
 	string name;
+	size_t count = 1;
 
-	this(Type type, string name)
+	this(Type type, string name, size_t count = 1)
 	{
 		super(type);
 		this.name = name;
+		this.count = count;
 	}
 }
 

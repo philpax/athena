@@ -12,6 +12,7 @@ import std.range;
 import std.stdio;
 import std.string;
 import std.traits;
+import std.conv : to;
 
 class Decompiler
 {
@@ -104,6 +105,19 @@ private:
 					this.outputStruct.addVariable(variable);
 				else
 					this.inputStruct.addVariable(variable);
+				break;
+			case Opcode.DCL_CONSTANT_BUFFER:
+				auto op = decl.op;
+				auto index = op.indices[0].disp;
+				auto constantBuffer = new ConstantBuffer(index);
+
+				auto count = op.indices[1].disp;
+				auto variable = new Variable(this.types["float4"], "cb" ~ index.to!string(), count);
+
+				constantBuffer.addVariable(variable);
+
+				rootNode.statements ~= constantBuffer;
+				this.constantBuffers[index] = constantBuffer;
 				break;
 			default:
 				break;
@@ -232,7 +246,7 @@ private:
 			return node;
 		}
 
-		ASTNode newExpr;
+		ASTNode newExpr = null;
 
 		switch (operand.file)
 		{
@@ -259,6 +273,12 @@ private:
 				this.outputStruct.variablesByIndex[operand.indices[0].disp]);
 
 			newExpr = new DotExpr(outputVariableExpr, memberVariableExpr);
+			break;
+		case FileType.CONSTANT_BUFFER:
+			auto index = operand.indices[0].disp;
+			auto constantBuffer = this.constantBuffers[index];
+
+			newExpr = generateVariableExpr(constantBuffer.variablesByIndex[0]);
 			break;
 		case FileType.IMMEDIATE32:	
 			if (type == OpcodeType.INT)
@@ -295,13 +315,13 @@ private:
 	Type getVectorType(T)(string name, T size)
 		if (isIntegral!T)
 	{
-		import std.conv : to;
 		return this.types[name ~ size.to!string()];
 	}
 
 	const(Program)* program;
 	Structure inputStruct;
 	Structure outputStruct;
+	ConstantBuffer[size_t] constantBuffers;
 	Type[string] types;
 	Function[string] globalFunctions;
 	uint registerCount = 0;

@@ -79,6 +79,25 @@ class Structure : Scope
 	}
 }
 
+class ConstantBuffer : Structure
+{
+	mixin ASTNodeBoilerplate;
+
+	size_t index;
+
+	this(size_t index)
+	{
+		import std.conv : to;
+		this.index = index;
+		super("ConstantBuffer" ~ this.index.to!string());
+	}
+
+	override string toString()
+	{
+		return typeof(this).stringof ~ ": " ~ this.name;
+	}
+}
+
 class Function : Scope
 {
 	mixin ASTNodeBoilerplate;
