@@ -31,12 +31,12 @@ void main(string[] args)
 	if (mode == Mode.decompile)
 	{
 		import decompiler.main;
-		import decompiler.pass.instructionrewrite;
+		import decompiler.pass.rewrite;
 
 		Pass[] passes;
 		if (process)
 		{
-			passes ~= new InstructionRewrite();
+			passes ~= new Rewrite();
 		}
 
 		auto decompilerInstance = new Decompiler(program, passes);

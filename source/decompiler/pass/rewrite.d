@@ -1,4 +1,4 @@
-module decompiler.pass.instructionrewrite;
+module decompiler.pass.rewrite;
 public import decompiler.pass.pass;
 
 import decompiler.ast;
@@ -6,7 +6,7 @@ import decompiler.recursivevisitor;
 
 import sm4.def;
 
-class InstructionRewrite : Pass
+class Rewrite : Pass
 {
 	override void run(ASTNode node)
 	{
@@ -75,8 +75,32 @@ class Visitor : RecursiveVisitor
 		}
 	}
 
+	void rewriteBinaryExpression(ref ASTNode rhs)
+	{
+		if (auto addExpr = cast(AddExpr)rhs)
+		{
+			// BEFORE: a = -b + c
+			// AFTER:  a = c - b
+			if (auto negateLhs = cast(NegateExpr)addExpr.lhs)
+			{
+				// Swap!
+				rhs = new SubtractExpr(addExpr.rhs, negateLhs.node);
+				return;
+			}
+
+			// BEFORE: a = b + -c
+			// AFTER:  a = b - c
+			if (auto negateRhs = cast(NegateExpr)addExpr.rhs)
+			{
+				rhs = new SubtractExpr(addExpr.lhs, negateRhs.node);
+				return;
+			}
+		}
+	}
+
 	override void visit(AssignExpr node)
 	{
 		this.rewriteInstruction(node.rhs);
+		this.rewriteBinaryExpression(node.rhs);
 	}
 }
