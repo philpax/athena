@@ -200,76 +200,43 @@ class NegateExpr : UnaryExpr
 }
 
 // BinaryExpr
-mixin template BinaryExprConstructor()
-{
-	this()
-	{
-	}
-
-	this(ASTNode lhs, ASTNode rhs)
-	{
-		this.lhs = lhs;
-		this.rhs = rhs;
-	}
-}
-
 class BinaryExpr : ASTNode
 {
 	mixin ASTNodeBoilerplate;
 
 	ASTNode lhs;
 	ASTNode rhs;
-
-	mixin BinaryExprConstructor;
+	string operator;
 }
 
-class AssignExpr : BinaryExpr
+mixin template MakeBinaryExpr(string Name, string Op)
 {
-	mixin ASTNodeBoilerplate;
-	mixin BinaryExprConstructor;
+	mixin(q{class } ~ Name ~ q{ : BinaryExpr
+	{
+		mixin ASTNodeBoilerplate;
+
+		this()
+		{
+			this.operator = Op;
+		}
+
+		this(ASTNode lhs, ASTNode rhs)
+		{
+			this.lhs = lhs;
+			this.rhs = rhs;
+			this.operator = Op;
+		}
+	}});
 }
 
-class AddExpr : BinaryExpr
-{
-	mixin ASTNodeBoilerplate;
-	mixin BinaryExprConstructor;	
-}
-
-class SubtractExpr : BinaryExpr
-{
-	mixin ASTNodeBoilerplate;
-	mixin BinaryExprConstructor;	
-}
-
-class MultiplyExpr : BinaryExpr
-{
-	mixin ASTNodeBoilerplate;
-	mixin BinaryExprConstructor;	
-}
-
-class DivideExpr : BinaryExpr
-{
-	mixin ASTNodeBoilerplate;
-	mixin BinaryExprConstructor;	
-}
-
-class DotExpr : BinaryExpr
-{
-	mixin ASTNodeBoilerplate;
-	mixin BinaryExprConstructor;
-}
-
-class EqualExpr : BinaryExpr
-{
-	mixin ASTNodeBoilerplate;
-	mixin BinaryExprConstructor;
-}
-
-class NotEqualExpr : BinaryExpr
-{
-	mixin ASTNodeBoilerplate;
-	mixin BinaryExprConstructor;
-}
+mixin MakeBinaryExpr!(`AssignExpr`,   "=");
+mixin MakeBinaryExpr!(`AddExpr`,      "+");
+mixin MakeBinaryExpr!(`SubtractExpr`, "-");
+mixin MakeBinaryExpr!(`MultiplyExpr`, "*");
+mixin MakeBinaryExpr!(`DivideExpr`,   "/");
+mixin MakeBinaryExpr!(`DotExpr`,      ".");
+mixin MakeBinaryExpr!(`EqualExpr`,    "==");
+mixin MakeBinaryExpr!(`NotEqualExpr`, "!=");
 
 // Other expressions
 class SwizzleExpr : ASTNode

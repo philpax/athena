@@ -140,59 +140,17 @@ class TextVisitor : RecursiveVisitor
 	}
 
 	// BinaryExpr
-	override void visit(AssignExpr node)
+	override void visit(BinaryExpr node)
 	{
 		node.lhs.tryAccept(this);
-		write(" = ");
-		node.rhs.tryAccept(this);
-	}
-
-	override void visit(AddExpr node)
-	{
-		node.lhs.tryAccept(this);
-		write(" + ");
-		node.rhs.tryAccept(this);
-	}
-	
-	override void visit(MultiplyExpr node)
-	{
-		node.lhs.tryAccept(this);
-		write(" * ");
-		node.rhs.tryAccept(this);
-	}
-	
-	override void visit(SubtractExpr node)
-	{
-		node.lhs.tryAccept(this);
-		write(" - ");
-		node.rhs.tryAccept(this);
-	}
-	
-	override void visit(DivideExpr node)
-	{
-		node.lhs.tryAccept(this);
-		write(" / ");
-		node.rhs.tryAccept(this);
+		write(" ", node.operator, " ");
+		node.rhs.tryAccept(this);		
 	}
 
 	override void visit(DotExpr node)
 	{
 		node.lhs.tryAccept(this);
 		write(".");
-		node.rhs.tryAccept(this);
-	}
-
-	override void visit(EqualExpr node)
-	{
-		node.lhs.tryAccept(this);
-		write(" == ");
-		node.rhs.tryAccept(this);
-	}
-
-	override void visit(NotEqualExpr node)
-	{
-		node.lhs.tryAccept(this);
-		write(" != ");
 		node.rhs.tryAccept(this);
 	}
 
