@@ -1,6 +1,7 @@
 module decompiler.pass.rewrite;
 public import decompiler.pass.pass;
 
+import decompiler.main;
 import decompiler.ast;
 import decompiler.recursivevisitor;
 import decompiler.value;
@@ -11,18 +12,23 @@ import std.algorithm;
 
 class Rewrite : Pass
 {
-	override void run(ASTNode node)
+	override void run(Decompiler decompiler, ASTNode node)
 	{
-		import std.typecons : scoped;
-
-		auto visitor = new Visitor;
+		auto visitor = new Visitor(decompiler);
 		node.accept(visitor);
 	}
 }
 
+private:
+
 class Visitor : RecursiveVisitor
 {
 	alias visit = RecursiveVisitor.visit;
+
+	this(Decompiler decompiler)
+	{
+		this.decompiler = decompiler;
+	}
 
 	override void visit(ASTNode node)
 	{
@@ -117,6 +123,15 @@ class Visitor : RecursiveVisitor
 				}
 				return;
 			}
+
+			// BEFORE: a = b + b
+			// AFTER:  a = b * 2
+			if (addExpr.lhs == addExpr.rhs)
+			{
+				auto immediate = new FloatImmediate(decompiler.types["float1"], 2);
+				rhs = new MultiplyExpr(addExpr.lhs, new ValueExpr(immediate));
+				return;
+			}
 		}
 	}
 
@@ -125,4 +140,6 @@ class Visitor : RecursiveVisitor
 		this.rewriteInstruction(node.rhs);
 		this.rewriteBinaryExpression(node.rhs);
 	}
+
+	Decompiler decompiler;
 }

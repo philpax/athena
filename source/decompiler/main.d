@@ -34,10 +34,14 @@ class Decompiler
 		this.addMainFunction(rootNode);
 
 		foreach (pass; this.passes)
-			pass.run(rootNode);
+			pass.run(this, rootNode);
 
 		return rootNode;
 	}
+	
+	ConstantBuffer[size_t] constantBuffers;
+	Type[string] types;
+	Function[string] globalFunctions;
 
 private:
 	void generateTypes()
@@ -360,9 +364,6 @@ private:
 	const(Program)* program;
 	Structure inputStruct;
 	Structure outputStruct;
-	ConstantBuffer[size_t] constantBuffers;
-	Type[string] types;
-	Function[string] globalFunctions;
 	Pass[] passes;
 	uint registerCount = 0;
 }

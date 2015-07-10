@@ -207,6 +207,16 @@ class BinaryExpr : ASTNode
 	ASTNode lhs;
 	ASTNode rhs;
 	string operator;
+
+	override bool opEquals(Object o)
+	{
+		auto rhs = cast(BinaryExpr)o;
+
+		if (!rhs)
+			return false;
+
+		return rhs.lhs == this.lhs && rhs.rhs == this.rhs;
+	}
 }
 
 mixin template MakeBinaryExpr(string Name, string Op)
@@ -258,6 +268,16 @@ class SwizzleExpr : ASTNode
 		return typeof(this).stringof ~ ": " ~ 
 			this.indices.map!(a => "xyzw"[a]).array();
 	}
+
+	override bool opEquals(Object o)
+	{
+		auto rhs = cast(SwizzleExpr)o;
+
+		if (!rhs)
+			return false;
+
+		return rhs.indices == this.indices;
+	}
 }
 
 class VariableAccessExpr : ASTNode
@@ -274,6 +294,16 @@ class VariableAccessExpr : ASTNode
 	override string toString()
 	{
 		return typeof(this).stringof ~ ": " ~ this.variable.name;
+	}
+
+	override bool opEquals(Object o)
+	{
+		auto rhs = cast(VariableAccessExpr)o;
+
+		if (!rhs)
+			return false;
+
+		return rhs.variable == this.variable;
 	}
 }
 
