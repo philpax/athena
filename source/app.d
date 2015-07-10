@@ -31,11 +31,16 @@ void main(string[] args)
 	if (mode == Mode.decompile)
 	{
 		import decompiler.main;
-		auto rootNode = new Decompiler(program).run();
+		import decompiler.pass.instructionrewrite;
 
+		Pass[] passes;
 		if (process)
 		{
+			passes ~= new InstructionRewrite();
 		}
+
+		auto decompilerInstance = new Decompiler(program, passes);
+		auto rootNode = decompilerInstance.run();
 
 		if (dumpAST)
 		{

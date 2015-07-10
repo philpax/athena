@@ -4,6 +4,8 @@ import decompiler.ast;
 import decompiler.type;
 import decompiler.value;
 
+import decompiler.pass.pass;
+
 import sm4.program;
 import sm4.def;
 
@@ -16,11 +18,13 @@ import std.conv : to;
 
 class Decompiler
 {
-	this(const(Program)* program)
+	this(const(Program)* program, Pass[] passes...)
 	{
 		this.program = program;
 		this.generateTypes();
 		this.generateFunctions();
+
+		this.passes = passes.dup;
 	}
 
 	Scope run()
@@ -28,6 +32,10 @@ class Decompiler
 		auto rootNode = new Scope;
 		this.addDecls(rootNode);
 		this.addMainFunction(rootNode);
+
+		foreach (pass; this.passes)
+			pass.run(rootNode);
+
 		return rootNode;
 	}
 
@@ -355,5 +363,6 @@ private:
 	ConstantBuffer[size_t] constantBuffers;
 	Type[string] types;
 	Function[string] globalFunctions;
+	Pass[] passes;
 	uint registerCount = 0;
 }

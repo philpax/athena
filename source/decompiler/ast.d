@@ -235,6 +235,24 @@ class AddExpr : BinaryExpr
 	mixin BinaryExprConstructor;	
 }
 
+class SubtractExpr : BinaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin BinaryExprConstructor;	
+}
+
+class MultiplyExpr : BinaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin BinaryExprConstructor;	
+}
+
+class DivideExpr : BinaryExpr
+{
+	mixin ASTNodeBoilerplate;
+	mixin BinaryExprConstructor;	
+}
+
 class DotExpr : BinaryExpr
 {
 	mixin ASTNodeBoilerplate;

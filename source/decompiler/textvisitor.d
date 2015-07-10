@@ -146,10 +146,32 @@ class TextVisitor : RecursiveVisitor
 		write(" = ");
 		node.rhs.tryAccept(this);
 	}
+
 	override void visit(AddExpr node)
 	{
 		node.lhs.tryAccept(this);
 		write(" + ");
+		node.rhs.tryAccept(this);
+	}
+	
+	override void visit(MultiplyExpr node)
+	{
+		node.lhs.tryAccept(this);
+		write(" * ");
+		node.rhs.tryAccept(this);
+	}
+	
+	override void visit(SubtractExpr node)
+	{
+		node.lhs.tryAccept(this);
+		write(" - ");
+		node.rhs.tryAccept(this);
+	}
+	
+	override void visit(DivideExpr node)
+	{
+		node.lhs.tryAccept(this);
+		write(" / ");
 		node.rhs.tryAccept(this);
 	}
 
