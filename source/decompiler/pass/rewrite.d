@@ -3,8 +3,11 @@ public import decompiler.pass.pass;
 
 import decompiler.ast;
 import decompiler.recursivevisitor;
+import decompiler.value;
 
 import sm4.def;
+
+import std.algorithm;
 
 class Rewrite : Pass
 {
@@ -81,18 +84,37 @@ class Visitor : RecursiveVisitor
 		{
 			// BEFORE: a = -b + c
 			// AFTER:  a = c - b
-			if (auto negateLhs = cast(NegateExpr)addExpr.lhs)
+			if (auto negateExpr = cast(NegateExpr)addExpr.lhs)
 			{
 				// Swap!
-				rhs = new SubtractExpr(addExpr.rhs, negateLhs.node);
+				rhs = new SubtractExpr(addExpr.rhs, negateExpr.node);
 				return;
 			}
 
 			// BEFORE: a = b + -c
 			// AFTER:  a = b - c
-			if (auto negateRhs = cast(NegateExpr)addExpr.rhs)
+			if (auto negateExpr = cast(NegateExpr)addExpr.rhs)
 			{
-				rhs = new SubtractExpr(addExpr.lhs, negateRhs.node);
+				rhs = new SubtractExpr(addExpr.lhs, negateExpr.node);
+				return;
+			}
+
+			// BEFORE: a = b + float4(-1, -1, -1, -0)
+			// AFTER:  a = b - float4(1, 1, 1, 0)
+			if (auto valueExpr = cast(ValueExpr)addExpr.rhs)
+			{
+				if (auto floatImmediate = cast(FloatImmediate)valueExpr.value)
+				{
+					if (floatImmediate.value.all!(a => a <= 0))
+					{
+						// Prevent negative zero
+						foreach (ref a; floatImmediate.value)
+							a = (a == 0) ? 0 : -a;
+
+						rhs = new SubtractExpr(addExpr.lhs, addExpr.rhs);
+						return;
+					}
+				}
 				return;
 			}
 		}
