@@ -76,6 +76,14 @@ class Visitor : RecursiveVisitor
 			return;
 		}
 
+		// BEFORE: a = div(b, c)
+		// AFTER:  a = b / c
+		if (instructionCallExpr.opcode == Opcode.DIV)
+		{
+			rhs = new DivideExpr(args[0], args[1]);
+			return;
+		}
+
 		// BEFORE: a = mad(b, c, d)
 		// AFTER:  a = b * c + d
 		if (instructionCallExpr.opcode == Opcode.MAD)
