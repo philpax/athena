@@ -171,10 +171,44 @@ class Visitor : RecursiveVisitor
 		}
 	}
 
+	void normalizeSwizzleSize(AssignExpr node)
+	{
+		// BEFORE: a.xyz = b.xyzx
+		// AFTER:  a.xyz = b.xyz
+		class UpdateSwizzle : RecursiveVisitor
+		{
+			size_t swizzleSize = 0;
+
+			override void beforeVisit(ASTNode) {}
+			override void afterVisit(ASTNode) {}
+
+			alias visit = RecursiveVisitor.visit;
+
+			override void visit(ASTNode node)
+			{
+			}
+
+			override void visit(SwizzleExpr node)
+			{
+				if (this.swizzleSize == 0)	
+					this.swizzleSize = node.indices.length;
+				else
+					node.indices.length = this.swizzleSize;
+			}
+		}
+
+		auto visitor = new UpdateSwizzle();
+		node.lhs.accept(visitor);
+
+		if (visitor.swizzleSize != 0)
+			node.rhs.accept(visitor);
+	}
+
 	override void visit(AssignExpr node)
 	{
 		this.rewriteInstruction(node.rhs);
 		this.rewriteBinaryExpression(node.rhs);
+		this.normalizeSwizzleSize(node);
 
 		super.visit(node);
 	}
