@@ -8,8 +8,8 @@ class RecursiveVisitor : ASTVisitor
 
 	alias visit = ASTVisitor.visit;
 
-	abstract void beforeVisit(ASTNode node);
-	abstract void afterVisit(ASTNode node);
+	void beforeVisit(ASTNode node) {}
+	void afterVisit(ASTNode node) {}
 
 	mixin(generateRecursiveMethods());
 }

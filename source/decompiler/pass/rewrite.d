@@ -38,18 +38,6 @@ class Visitor : RecursiveVisitor
 		this.decompiler = decompiler;
 	}
 
-	override void visit(ASTNode node)
-	{
-	}
-
-	override void beforeVisit(ASTNode node)
-	{
-	}
-
-	override void afterVisit(ASTNode node)
-	{
-	}
-
 	void rewriteInstruction(ref ASTNode rhs)
 	{
 		auto instructionCallExpr = cast(InstructionCallExpr)rhs;
@@ -198,14 +186,7 @@ class Visitor : RecursiveVisitor
 		{
 			size_t swizzleSize = 0;
 
-			override void beforeVisit(ASTNode) {}
-			override void afterVisit(ASTNode) {}
-
 			alias visit = RecursiveVisitor.visit;
-
-			override void visit(ASTNode node)
-			{
-			}
 
 			override void visit(SwizzleExpr node)
 			{

@@ -402,7 +402,6 @@ abstract class ASTVisitor
 {
 	void visit(ASTNode node)
 	{
-		assert(false);
 	}
 
 	mixin(generateVisitorMethods());
