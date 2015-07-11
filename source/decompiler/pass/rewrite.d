@@ -175,6 +175,8 @@ class Visitor : RecursiveVisitor
 	{
 		this.rewriteInstruction(node.rhs);
 		this.rewriteBinaryExpression(node.rhs);
+
+		super.visit(node);
 	}
 
 	override void visit(SwizzleExpr node)
