@@ -177,5 +177,13 @@ class Visitor : RecursiveVisitor
 		this.rewriteBinaryExpression(node.rhs);
 	}
 
+	override void visit(SwizzleExpr node)
+	{
+		// BEFORE: a.xxxx
+		// AFTER:  a.x
+		if (node.indices.uniq.walkLength == 1)
+			node.indices = node.indices[0..1];
+	}
+
 	Decompiler decompiler;
 }
