@@ -9,6 +9,7 @@ import decompiler.value;
 import sm4.def;
 
 import std.algorithm;
+import std.range;
 
 class Rewrite : Pass
 {
@@ -94,7 +95,6 @@ class Visitor : RecursiveVisitor
 			{
 				// Swap!
 				rhs = new SubtractExpr(addExpr.rhs, negateExpr.node);
-				return;
 			}
 
 			// BEFORE: a = b + -c
@@ -102,7 +102,6 @@ class Visitor : RecursiveVisitor
 			if (auto negateExpr = cast(NegateExpr)addExpr.rhs)
 			{
 				rhs = new SubtractExpr(addExpr.lhs, negateExpr.node);
-				return;
 			}
 
 			// BEFORE: a = b + float4(-1, -1, -1, -0)
@@ -118,10 +117,8 @@ class Visitor : RecursiveVisitor
 							a = (a == 0) ? 0 : -a;
 
 						rhs = new SubtractExpr(addExpr.lhs, addExpr.rhs);
-						return;
 					}
 				}
-				return;
 			}
 
 			// BEFORE: a = b + b
@@ -130,7 +127,38 @@ class Visitor : RecursiveVisitor
 			{
 				auto immediate = new FloatImmediate(decompiler.types["float1"], 2);
 				rhs = new MultiplyExpr(addExpr.lhs, new ValueExpr(immediate));
-				return;
+			}
+		}
+
+		if (auto multiplyExpr = cast(MultiplyExpr)rhs)
+		{
+			// BEFORE: a = b * float4(5, 5, 5, 5)
+			// AFTER:  a = b * 5
+			if (auto valueExpr = cast(ValueExpr)multiplyExpr.rhs)
+			{
+				if (auto floatImmediate = cast(FloatImmediate)valueExpr.value)
+				{
+					if (floatImmediate.value.uniq.walkLength == 1)
+					{
+						floatImmediate.value = floatImmediate.value[0..1];
+						floatImmediate.type = this.decompiler.getVectorType("float", 1);
+					}
+				}
+			}
+
+			// BEFORE: a = b * 0.25
+			// AFTER:  a = b / 4
+			if (auto valueExpr = cast(ValueExpr)multiplyExpr.rhs)
+			{
+				if (auto floatImmediate = cast(FloatImmediate)valueExpr.value)
+				{
+					auto value = floatImmediate.value;
+					if (value.length == 1 && value[0] > 0.0f && value[0] < 1.0f)
+					{
+						value[0] = 1 / value[0];
+						rhs = new DivideExpr(multiplyExpr.lhs, multiplyExpr.rhs);
+					}
+				}
 			}
 		}
 	}
