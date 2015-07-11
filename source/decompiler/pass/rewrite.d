@@ -5,6 +5,7 @@ import decompiler.main;
 import decompiler.ast;
 import decompiler.recursivevisitor;
 import decompiler.value;
+import decompiler.type;
 
 import sm4.def;
 
@@ -95,6 +96,10 @@ class Visitor : RecursiveVisitor
 
 	void rewriteBinaryExpression(ref ASTNode rhs)
 	{
+		auto binaryExpr = cast(BinaryExpr)rhs;
+		if (!binaryExpr)
+			return;
+
 		if (auto addExpr = cast(AddExpr)rhs)
 		{
 			// BEFORE: a = -b + c
@@ -142,58 +147,94 @@ class Visitor : RecursiveVisitor
 			}
 		}
 
+		// BEFORE: a = b * float4(5, 5, 5, 5)
+		// AFTER:  a = b * 5
+		void applyCollapseValueTransform(ASTNode node)
+		{
+			auto valueExpr = cast(ValueExpr)node;
+
+			if (!valueExpr)
+				return;
+
+			auto floatImmediate = cast(FloatImmediate)valueExpr.value;
+
+			if (!floatImmediate)
+				return;
+
+			auto value = floatImmediate.value;
+			if (value.length > 1 && value.uniq.walkLength == 1)
+			{
+				floatImmediate.value = value[0..1];
+				floatImmediate.type = this.decompiler.getVectorType("float", 1);
+				this.madeChanges = true;
+			}
+		}			
+
+		applyCollapseValueTransform(binaryExpr.lhs);
+		applyCollapseValueTransform(binaryExpr.rhs);
+
+		// BEFORE: a = b * 0.25
+		// AFTER:  a = b / 4
 		if (auto multiplyExpr = cast(MultiplyExpr)rhs)
 		{
-			// BEFORE: a = b * float4(5, 5, 5, 5)
-			// AFTER:  a = b * 5
 			if (auto valueExpr = cast(ValueExpr)multiplyExpr.rhs)
 			{
-				if (auto floatImmediate = cast(FloatImmediate)valueExpr.value)
-				{
-					if (floatImmediate.value.length > 1 &&
-						floatImmediate.value.uniq.walkLength == 1)
-					{
-						floatImmediate.value = floatImmediate.value[0..1];
-						floatImmediate.type = this.decompiler.getVectorType("float", 1);
-						this.madeChanges = true;
-					}
-				}
-			}
+				auto floatImmediate = cast(FloatImmediate)valueExpr.value;
 
-			// BEFORE: a = b * 0.25
-			// AFTER:  a = b / 4
-			if (auto valueExpr = cast(ValueExpr)multiplyExpr.rhs)
-			{
-				if (auto floatImmediate = cast(FloatImmediate)valueExpr.value)
+				if (!floatImmediate)
+					return;
+				
+				auto value = floatImmediate.value;
+				if (value.length == 1 && value[0] > 0.0f && value[0] < 1.0f)
 				{
-					auto value = floatImmediate.value;
-					if (value.length == 1 && value[0] > 0.0f && value[0] < 1.0f)
-					{
-						value[0] = 1 / value[0];
-						rhs = new DivideExpr(multiplyExpr.lhs, multiplyExpr.rhs);
-						this.madeChanges = true;
-					}
+					value[0] = 1 / value[0];
+					rhs = new DivideExpr(multiplyExpr.lhs, multiplyExpr.rhs);
+					this.madeChanges = true;
 				}
 			}
 		}
+
+		this.rewriteBinaryExpression(binaryExpr.lhs);
+		this.rewriteBinaryExpression(binaryExpr.rhs);
 	}
 
 	void normalizeSwizzleSize(AssignExpr node)
 	{
-		// BEFORE: a.xyz = b.xyzx
-		// AFTER:  a.xyz = b.xyz
 		class UpdateSwizzle : RecursiveVisitor
 		{
 			size_t swizzleSize = 0;
 
 			alias visit = RecursiveVisitor.visit;
 
+			// BEFORE: a.xyz = b.xyzx
+			// AFTER:  a.xyz = b.xyz
 			override void visit(SwizzleExpr node)
 			{
 				if (this.swizzleSize == 0)
 					this.swizzleSize = node.indices.length;
 				else if (node.indices.length != this.swizzleSize)
 					node.indices.length = this.swizzleSize;
+			}
+
+			// BEFORE: a.xyz = float4(1, 1, 1, 0)
+			// AFTER:  a.xyz = float3(1, 1, 1)
+			override void visit(ValueExpr node)
+			{
+				auto floatImmediate = cast(FloatImmediate)node.value;
+				if (!floatImmediate)
+					return;
+
+				auto vectorType = cast(VectorType)floatImmediate.type;
+				auto value = floatImmediate.value;
+
+				if (this.swizzleSize < value.length)
+				{
+					auto type = this.outer.decompiler.getVectorType(
+						vectorType.type.name, this.swizzleSize);
+
+					floatImmediate.type = type;
+					floatImmediate.value = value[0..this.swizzleSize];
+				}
 			}
 		}
 
