@@ -13,10 +13,16 @@ import std.range;
 
 class Rewrite : Pass
 {
-	override void run(Decompiler decompiler, ASTNode node)
+	override bool run(Decompiler decompiler, ASTNode node)
 	{
 		auto visitor = new Visitor(decompiler);
 		node.accept(visitor);
+		return visitor.madeChanges;
+	}
+
+	override string getName()
+	{
+		return typeof(this).stringof;
 	}
 }
 
@@ -25,6 +31,7 @@ private:
 class Visitor : RecursiveVisitor
 {
 	alias visit = RecursiveVisitor.visit;
+	bool madeChanges = false;
 
 	this(Decompiler decompiler)
 	{
@@ -57,6 +64,7 @@ class Visitor : RecursiveVisitor
 		if (instructionCallExpr.opcode == Opcode.MOV)
 		{
 			rhs = args[0];
+			this.madeChanges = true;
 			return;
 		}
 
@@ -65,6 +73,7 @@ class Visitor : RecursiveVisitor
 		if (instructionCallExpr.opcode == Opcode.ADD)
 		{
 			rhs = new AddExpr(args[0], args[1]);
+			this.madeChanges = true;
 			return;
 		}
 
@@ -73,6 +82,7 @@ class Visitor : RecursiveVisitor
 		if (instructionCallExpr.opcode == Opcode.MUL)
 		{
 			rhs = new MultiplyExpr(args[0], args[1]);
+			this.madeChanges = true;
 			return;
 		}
 
@@ -81,6 +91,7 @@ class Visitor : RecursiveVisitor
 		if (instructionCallExpr.opcode == Opcode.DIV)
 		{
 			rhs = new DivideExpr(args[0], args[1]);
+			this.madeChanges = true;
 			return;
 		}
 
@@ -89,6 +100,7 @@ class Visitor : RecursiveVisitor
 		if (instructionCallExpr.opcode == Opcode.MAD)
 		{
 			rhs = new AddExpr(new MultiplyExpr(args[0], args[1]), args[2]);
+			this.madeChanges = true;
 			return;
 		}
 	}
@@ -103,6 +115,7 @@ class Visitor : RecursiveVisitor
 			{
 				// Swap!
 				rhs = new SubtractExpr(addExpr.rhs, negateExpr.node);
+				this.madeChanges = true;
 			}
 
 			// BEFORE: a = b + -c
@@ -110,6 +123,7 @@ class Visitor : RecursiveVisitor
 			if (auto negateExpr = cast(NegateExpr)addExpr.rhs)
 			{
 				rhs = new SubtractExpr(addExpr.lhs, negateExpr.node);
+				this.madeChanges = true;
 			}
 
 			// BEFORE: a = b + float4(-1, -1, -1, -0)
@@ -125,6 +139,7 @@ class Visitor : RecursiveVisitor
 							a = (a == 0) ? 0 : -a;
 
 						rhs = new SubtractExpr(addExpr.lhs, addExpr.rhs);
+						this.madeChanges = true;
 					}
 				}
 			}
@@ -135,6 +150,7 @@ class Visitor : RecursiveVisitor
 			{
 				auto immediate = new FloatImmediate(decompiler.types["float1"], 2);
 				rhs = new MultiplyExpr(addExpr.lhs, new ValueExpr(immediate));
+				this.madeChanges = true;
 			}
 		}
 
@@ -146,10 +162,12 @@ class Visitor : RecursiveVisitor
 			{
 				if (auto floatImmediate = cast(FloatImmediate)valueExpr.value)
 				{
-					if (floatImmediate.value.uniq.walkLength == 1)
+					if (floatImmediate.value.length > 1 &&
+						floatImmediate.value.uniq.walkLength == 1)
 					{
 						floatImmediate.value = floatImmediate.value[0..1];
 						floatImmediate.type = this.decompiler.getVectorType("float", 1);
+						this.madeChanges = true;
 					}
 				}
 			}
@@ -165,6 +183,7 @@ class Visitor : RecursiveVisitor
 					{
 						value[0] = 1 / value[0];
 						rhs = new DivideExpr(multiplyExpr.lhs, multiplyExpr.rhs);
+						this.madeChanges = true;
 					}
 				}
 			}
@@ -190,9 +209,9 @@ class Visitor : RecursiveVisitor
 
 			override void visit(SwizzleExpr node)
 			{
-				if (this.swizzleSize == 0)	
+				if (this.swizzleSize == 0)
 					this.swizzleSize = node.indices.length;
-				else
+				else if (node.indices.length != this.swizzleSize)
 					node.indices.length = this.swizzleSize;
 			}
 		}
@@ -217,7 +236,7 @@ class Visitor : RecursiveVisitor
 	{
 		// BEFORE: a.xxxx
 		// AFTER:  a.x
-		if (node.indices.uniq.walkLength == 1)
+		if (node.indices.length > 1 && node.indices.uniq.walkLength == 1)
 			node.indices = node.indices[0..1];
 	}
 

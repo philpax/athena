@@ -33,12 +33,24 @@ class Decompiler
 		this.addDecls(rootNode);
 		this.addMainFunction(rootNode);
 
-		foreach (pass; this.passes)
-			pass.run(this, rootNode);
+		bool continueRunning = true;
+		while (continueRunning)
+		{
+			// If this variable's true, we need to keep running
+			bool madeChanges = false;
+
+			foreach (pass; this.passes)
+			{
+				writeln("// Pass: ", pass.getName());
+				madeChanges |= pass.run(this, rootNode);
+			}
+
+			continueRunning = madeChanges;
+		}
 
 		return rootNode;
 	}
-	
+
 	ConstantBuffer[size_t] constantBuffers;
 	Type[string] types;
 	Function[string] globalFunctions;

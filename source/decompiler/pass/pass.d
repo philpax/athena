@@ -5,5 +5,6 @@ import decompiler.ast;
 
 interface Pass
 {
-	void run(Decompiler decompiler, ASTNode node);
+	bool run(Decompiler decompiler, ASTNode node);
+	string getName();
 }
