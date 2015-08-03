@@ -33,6 +33,7 @@ class Decompiler
 		this.addDecls(rootNode);
 		this.addMainFunction(rootNode);
 
+		uint[string] passesCount;
 		bool continueRunning = true;
 		while (continueRunning)
 		{
@@ -41,12 +42,16 @@ class Decompiler
 
 			foreach (pass; this.passes)
 			{
-				writeln("// Pass: ", pass.getName());
+				passesCount[pass.getName()]++;
 				madeChanges |= pass.run(this, rootNode);
 			}
 
 			continueRunning = madeChanges;
 		}
+
+		writeln("// Passes:");
+		foreach (pass, count; passesCount)
+			writefln("//  %s: %s times", pass, count);
 
 		return rootNode;
 	}
