@@ -202,18 +202,26 @@ class Visitor : RecursiveVisitor
 	{
 		class UpdateSwizzle : RecursiveVisitor
 		{
-			size_t swizzleSize = 0;
+			ubyte[] swizzle = null;
 
 			alias visit = RecursiveVisitor.visit;
+			final T[] remapSwizzle(T)(T[] values)
+			{
+				return values
+						.enumerate
+						.filter!(a => this.swizzle.canFind(cast(ubyte)a[0]))
+						.map!(a => a[1])
+						.array();
+			}
 
 			// BEFORE: a.xyz = b.xyzx
 			// AFTER:  a.xyz = b.xyz
 			override void visit(SwizzleExpr node)
 			{
-				if (this.swizzleSize == 0)
-					this.swizzleSize = node.indices.length;
-				else if (node.indices.length != this.swizzleSize)
-					node.indices.length = this.swizzleSize;
+				if (this.swizzle is null)
+					this.swizzle = node.indices.dup;
+				else if (node.indices.length != this.swizzle.length)
+					node.indices = this.remapSwizzle(node.indices);
 			}
 
 			// BEFORE: a.xyz = float4(1, 1, 1, 0)
@@ -227,13 +235,14 @@ class Visitor : RecursiveVisitor
 				auto vectorType = cast(VectorType)floatImmediate.type;
 				auto value = floatImmediate.value;
 
-				if (this.swizzleSize < value.length)
+				if (this.swizzle.length < value.length)
 				{
 					auto type = this.outer.decompiler.getVectorType(
-						vectorType.type.name, this.swizzleSize);
+						vectorType.type.name, this.swizzle.length);
 
 					floatImmediate.type = type;
-					floatImmediate.value = value[0..this.swizzleSize];
+					floatImmediate.value = 
+						this.remapSwizzle(floatImmediate.value);
 				}
 			}
 		}
@@ -241,7 +250,7 @@ class Visitor : RecursiveVisitor
 		auto visitor = new UpdateSwizzle();
 		node.lhs.accept(visitor);
 
-		if (visitor.swizzleSize != 0)
+		if (visitor.swizzle !is null)
 			node.rhs.accept(visitor);
 	}
 
