@@ -98,29 +98,25 @@ class ConstantBuffer : Structure
 	}
 }
 
-class Function : Scope
+class FunctionScope : Scope
 {
 	mixin ASTNodeBoilerplate;
 
-	Type returnType;
-	string name;
-	ASTNode[] arguments;
+	Function func;
 
-	this(Type returnType, string name)
+	this(Function func)
 	{
-		this.returnType = returnType;
-		this.name = name;
-	}
-
-	final void addArgument(Variable variable)
-	{
-		this.arguments ~= new VariableDeclExpr(variable);
-		this.addVariable(variable, false, false);
+		this.func = func;
+		foreach (argument; this.func.arguments)
+		{
+			this.addVariable(
+				new Variable(argument[0], argument[1]), false, false);
+		}
 	}
 
 	override string toString()
 	{
-		return typeof(this).stringof ~ ": " ~ this.name;
+		return typeof(this).stringof ~ ": " ~ this.func.name;
 	}
 }
 

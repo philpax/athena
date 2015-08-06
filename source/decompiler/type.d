@@ -1,6 +1,7 @@
 module decompiler.type;
 
 import decompiler.ast : Structure;
+import std.typecons;
 
 class Type
 {
@@ -40,5 +41,18 @@ class StructureType : Type
 	{
 		this.type = type;
 		super(type.name);
+	}
+}
+
+class Function : Type
+{
+	Type returnType;
+	Tuple!(Type, string)[] arguments;
+
+	this(Type returnType, string name, Tuple!(Type, string)[] arguments...)
+	{
+		this.returnType = returnType;
+		this.arguments = arguments.dup;
+		super(name);
 	}
 }

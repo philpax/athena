@@ -15,6 +15,7 @@ import std.stdio;
 import std.string;
 import std.traits;
 import std.conv : to;
+import std.typecons;
 
 class Decompiler
 {
@@ -31,7 +32,7 @@ class Decompiler
 	{
 		auto rootNode = new Scope;
 		this.addDecls(rootNode);
-		this.addMainFunction(rootNode);
+		this.addMainFunctionScope(rootNode);
 
 		uint[string] passesCount;
 		bool continueRunning = true;
@@ -90,7 +91,8 @@ private:
 		auto any = this.types["Any"];
 		void makeUnaryFunction(string name)
 		{
-			this.globalFunctions[name] = new Function(any, name);
+			this.globalFunctions[name] = 
+				new Function(any, name, tuple(any, "input"));
 		}
 
 		makeUnaryFunction("abs");
@@ -154,24 +156,26 @@ private:
 		}
 	}
 
-	void addMainFunction(Scope rootNode)
+	void addMainFunctionScope(Scope rootNode)
 	{
-		auto mainFn = new Function(this.types["ShaderOutput"], "main");
-		mainFn.addArgument(new Variable(this.types["ShaderInput"], "input"));
+		auto mainFn = new Function(this.types["ShaderOutput"], "main", 
+			tuple(this.types["ShaderInput"], "input"));
+
+		auto mainFnScope = new FunctionScope(mainFn);
 		
 		foreach (i; 0..this.registerCount)
 		{
 			auto type = this.getVectorType("float", 4);
 			auto name = "r%s".format(i);
-			mainFn.addVariable(new Variable(type, name));
+			mainFnScope.addVariable(new Variable(type, name));
 		}
 
-		mainFn.addVariable(new Variable(this.types["ShaderOutput"], "output"));
-		this.addInstructions(mainFn);
-		rootNode.statements ~= mainFn;
+		mainFnScope.addVariable(new Variable(this.types["ShaderOutput"], "output"));
+		this.addInstructions(mainFnScope);
+		rootNode.statements ~= mainFnScope;
 	}
 
-	void addInstructions(Function fn)
+	void addInstructions(FunctionScope fn)
 	{
 		Scope currentScope = fn;
 

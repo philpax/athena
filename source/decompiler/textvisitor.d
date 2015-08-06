@@ -74,18 +74,18 @@ class TextVisitor : RecursiveVisitor
 		this.visitScope(node, true);
 	}
 
-	override void visit(Function node)
+	override void visit(FunctionScope node)
 	{
 		// Write signature
 		writeSpaces();
-		writef("%s %s(", node.returnType, node.name);
+		writef("%s %s(", node.func.returnType, node.func.name);
 		bool first = true;
-		foreach (argument; node.arguments)
+		foreach (argument; node.func.arguments)
 		{
 			if (!first)
 				write(", ");
 
-			argument.tryAccept(this);
+			writef("%s %s", argument[0], argument[1]);
 			first = false;
 		}
 		writeln(")");
