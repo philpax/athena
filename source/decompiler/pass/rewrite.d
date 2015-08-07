@@ -219,9 +219,14 @@ class Visitor : RecursiveVisitor
 			override void visit(SwizzleExpr node)
 			{
 				if (this.swizzle is null)
+				{
 					this.swizzle = node.indices.dup;
-				else if (node.indices.length != this.swizzle.length)
+				}
+				else if (node.indices.length != this.swizzle.length && 
+						node.indices.length > 1)
+				{
 					node.indices = this.remapSwizzle(node.indices);
+				}
 			}
 
 			// BEFORE: a.xyz = float4(1, 1, 1, 0)
