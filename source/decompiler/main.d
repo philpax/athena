@@ -97,6 +97,15 @@ private:
 
 		makeUnaryFunction("abs");
 		makeUnaryFunction("saturate");
+
+		auto float3 = this.getVectorType("float", 3);
+		auto float4 = this.getVectorType("float", 4);
+
+		this.globalFunctions["dp3"] =
+			new Function(float3, "dot", tuple(float3, "a"), tuple(float3, "b"));
+
+		this.globalFunctions["dp4"] =
+			new Function(float4, "dot", tuple(float4, "a"), tuple(float4, "b"));
 	}
 
 	void addDecls(Scope rootNode)
@@ -228,8 +237,13 @@ private:
 	ASTNode decompileInstruction(Scope currentScope, const(Instruction*) instruction)
 	{
 		auto opcode = instruction.opcode;
-		auto instructionCall = new InstructionCallExpr(opcode);
-		ASTNode node = instructionCall;
+		CallExpr call;
+		auto functionMatch = OpcodeNames[opcode] in this.globalFunctions;
+		if (functionMatch)
+			call = new FunctionCallExpr(*functionMatch);
+		else
+			call = new InstructionCallExpr(opcode);
+		ASTNode node = call;
 
 		if (instruction.instruction.sat)
 			node = new FunctionCallExpr(this.globalFunctions["saturate"], node);
@@ -246,7 +260,7 @@ private:
 			foreach (operand; instruction.operands[1..$])
 			{
 				auto operandNode = this.decompileOperand(currentScope, operand, operandType);
-				instructionCall.arguments ~= operandNode;
+				call.arguments ~= operandNode;
 			}
 		}
 
