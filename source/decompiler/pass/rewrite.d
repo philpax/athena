@@ -39,14 +39,22 @@ class Visitor : RecursiveVisitor
 		this.decompiler = decompiler;
 	}
 
-	void rewriteInstruction(ref ASTNode rhs)
+	void rewriteCall(ref ASTNode rhs)
 	{
+		auto callExpr = cast(CallExpr)rhs;
+
+		if (!callExpr)
+			return;
+
+		auto args = callExpr.arguments;
+
+		foreach (ref arg; args)
+			this.rewriteCall(arg);
+
 		auto instructionCallExpr = cast(InstructionCallExpr)rhs;
 
 		if (!instructionCallExpr)
 			return;
-
-		auto args = instructionCallExpr.arguments;
 
 		// BEFORE: a = mov(b)
 		// AFTER:  a = b
@@ -261,7 +269,7 @@ class Visitor : RecursiveVisitor
 
 	override void visit(AssignExpr node)
 	{
-		this.rewriteInstruction(node.rhs);
+		this.rewriteCall(node.rhs);
 		this.rewriteBinaryExpression(node.rhs);
 		this.normalizeSwizzleSize(node);
 
