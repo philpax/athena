@@ -98,6 +98,7 @@ private:
 		makeUnaryFunction("abs");
 		makeUnaryFunction("saturate");
 
+		auto float1 = this.getVectorType("float", 1);
 		auto float3 = this.getVectorType("float", 3);
 		auto float4 = this.getVectorType("float", 4);
 
@@ -106,6 +107,9 @@ private:
 
 		this.globalFunctions["dp4"] =
 			new Function(float4, "dot", tuple(float4, "a"), tuple(float4, "b"));
+
+		this.globalFunctions["rsq"] =
+			new Function(float1, "rsqrt", tuple(float1, "value"));
 	}
 
 	void addDecls(Scope rootNode)
