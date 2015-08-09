@@ -211,10 +211,14 @@ class Visitor : RecursiveVisitor
 		class UpdateSwizzle : RecursiveVisitor
 		{
 			ubyte[] swizzle = null;
+			ubyte overrideSwizzleSize = 0;
 
 			alias visit = RecursiveVisitor.visit;
 			final T[] remapSwizzle(T)(T[] values)
 			{
+				if (this.overrideSwizzleSize)
+					return values[0..min(this.overrideSwizzleSize, values.length)];
+
 				return values
 						.enumerate
 						.filter!(a => this.swizzle.canFind(cast(ubyte)a[0]))
@@ -257,6 +261,22 @@ class Visitor : RecursiveVisitor
 					floatImmediate.value = 
 						this.remapSwizzle(floatImmediate.value);
 				}
+			}
+
+			override void visit(FunctionCallExpr node)
+			{
+				foreach (argNode, argTuple; node.arguments.zip(node.func.arguments))
+				{
+					auto vectorType = cast(VectorType)argTuple[0];
+					if (vectorType)
+						this.overrideSwizzleSize = cast(ubyte)vectorType.size;
+					else
+						this.overrideSwizzleSize = 0;
+
+					if (argNode)
+						argNode.accept(this);
+				}
+				this.overrideSwizzleSize = 0;
 			}
 		}
 
