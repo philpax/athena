@@ -53,6 +53,24 @@ class Visitor : RecursiveVisitor
 		}
 	}
 
+	override void visit(Scope node)
+	{
+		for (size_t i = 0; i < node.statements.length; ++i)
+		{
+			auto stmt = node.statements[i];
+
+			if (auto statement = cast(Statement)stmt)
+			{
+				if (auto assignExpr = cast(AssignExpr)statement.expr)
+					this.visit(assignExpr);
+			}
+			else if (auto scopeNode = cast(Scope)stmt)
+			{
+				this.visit(scopeNode);
+			}
+		}
+	}
+
 	Decompiler decompiler;
 	uint index = 0;
 }
