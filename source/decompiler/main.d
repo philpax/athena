@@ -19,13 +19,26 @@ import std.typecons;
 
 class Decompiler
 {
-	this(const(Program)* program, Pass[] passes...)
+	this(const(Program)* program)
 	{
 		this.program = program;
 		this.generateTypes();
 		this.generateFunctions();
+	}
 
-		this.passes = passes.dup;
+	void addPrePass(Pass pass)
+	{
+		this.prePasses ~= pass;
+	}
+
+	void addPostPass(Pass pass)
+	{
+		this.postPasses ~= pass;
+	}
+
+	void addPass(Pass pass)
+	{
+		this.passes ~= pass;
 	}
 
 	Scope run()
@@ -36,6 +49,13 @@ class Decompiler
 
 		uint[string] passesCount;
 		bool continueRunning = true;
+
+		foreach (pass; this.prePasses)
+		{
+			passesCount[pass.getName()]++;
+			pass.run(this, rootNode);
+		}
+
 		while (continueRunning)
 		{
 			// If this variable's true, we need to keep running
@@ -48,6 +68,12 @@ class Decompiler
 			}
 
 			continueRunning = madeChanges;
+		}
+
+		foreach (pass; this.postPasses)
+		{
+			passesCount[pass.getName()]++;
+			pass.run(this, rootNode);
 		}
 
 		writeln("// Passes:");
@@ -403,6 +429,8 @@ private:
 	const(Program)* program;
 	Structure inputStruct;
 	Structure outputStruct;
+	Pass[] prePasses;
 	Pass[] passes;
+	Pass[] postPasses;
 	uint registerCount = 0;
 }

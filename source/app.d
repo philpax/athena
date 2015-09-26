@@ -36,13 +36,11 @@ void main(string[] args)
 
 	if (mode == Mode.decompile)
 	{
-		Pass[] passes;
-		if (process)
-		{
-			passes ~= new Rewrite();
-		}
+		auto decompilerInstance = new Decompiler(program);
 
-		auto decompilerInstance = new Decompiler(program, passes);
+		if (process)
+			decompilerInstance.addPass(new Rewrite());
+
 		auto rootNode = decompilerInstance.run();
 
 		if (dumpAST)
