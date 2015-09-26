@@ -5,6 +5,12 @@ import std.file;
 
 import sm4.program;
 
+import decompiler.main;
+import decompiler.dumpvisitor, decompiler.textvisitor;
+import decompiler.pass.rewrite;
+
+import disassembler.main;
+
 enum Mode
 {
 	disassemble,
@@ -30,9 +36,6 @@ void main(string[] args)
 
 	if (mode == Mode.decompile)
 	{
-		import decompiler.main;
-		import decompiler.pass.rewrite;
-
 		Pass[] passes;
 		if (process)
 		{
@@ -43,21 +46,12 @@ void main(string[] args)
 		auto rootNode = decompilerInstance.run();
 
 		if (dumpAST)
-		{
-			import decompiler.dumpvisitor;
-			auto dumpVisitor = new DumpVisitor;
-			rootNode.accept(dumpVisitor);
-		}
+			rootNode.accept(new DumpVisitor());
 		else
-		{
-			import decompiler.textvisitor;
-			auto textVisitor = new TextVisitor;
-			rootNode.accept(textVisitor);
-		}
+			rootNode.accept(new TextVisitor());
 	}
 	else
 	{
-		import disassembler.main;
 		program.dump();
 	}
 }
