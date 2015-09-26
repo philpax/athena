@@ -29,7 +29,10 @@ class VectorType : Type
 		this.size = size;
 
 		import std.conv : to;
-		super(this.type.toString() ~ this.size.to!string);
+		if (this.size > 1)
+			super(this.type.toString() ~ this.size.to!string);
+		else
+			super(this.type.toString());
 	}
 }
 

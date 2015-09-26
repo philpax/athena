@@ -93,7 +93,7 @@ private:
 		void generateSetOfTypes(string typeName)
 		{
 			auto type = new Type(typeName);
-			this.types[type.toString()] = type;
+			this.types["_" ~ type.toString()] = type;
 
 			foreach (i; 1..5)
 			{
@@ -231,7 +231,7 @@ private:
 				break;
 			case Opcode.IF:
 				auto operand = this.decompileOperand(currentScope, instruction.operands[0]);
-				auto zero = new IntImmediate(this.types["int1"], 0);
+				auto zero = new IntImmediate(this.types["int"], 0);
 				auto valueExpr = new ValueExpr(zero);
 
 				if (instruction.instruction.testNz)
@@ -306,7 +306,7 @@ private:
 
 			ASTNode makeIntegerImmediate(int v)
 			{
-				return new ValueExpr(new IntImmediate(this.types["int1"], v));
+				return new ValueExpr(new IntImmediate(this.types["int"], v));
 			}
 
 			foreach (index; operand.indices[1..$])
@@ -423,7 +423,10 @@ private:
 	Type getVectorType(T)(string name, T size)
 		if (isIntegral!T)
 	{
-		return this.types[name ~ size.to!string()];
+		if (size > 1)
+			return this.types[name ~ size.to!string()];
+		else
+			return this.types[name];
 	}
 
 	const(Program)* program;

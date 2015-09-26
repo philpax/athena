@@ -149,7 +149,7 @@ class Visitor : RecursiveVisitor
 			// AFTER:  a = b * 2
 			if (addExpr.lhs == addExpr.rhs)
 			{
-				auto immediate = new FloatImmediate(decompiler.types["float1"], 2);
+				auto immediate = new FloatImmediate(decompiler.types["float"], 2);
 				rhs = new MultiplyExpr(addExpr.lhs, new ValueExpr(immediate));
 				this.madeChanges = true;
 			}
