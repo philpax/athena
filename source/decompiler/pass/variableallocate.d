@@ -47,7 +47,7 @@ class Visitor : RecursiveVisitor
 			if (!swizzleExpr)
 				return;
 
-			auto type = decompiler.getVectorType("float", swizzleExpr.indices.length);
+			auto type = decompiler.getType("float", swizzleExpr.indices.length);
 			auto variable = new Variable(type, "v%s".format(index++));
 			node.lhs = new VariableDeclExpr(variable);
 		}

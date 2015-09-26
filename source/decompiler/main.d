@@ -84,7 +84,6 @@ class Decompiler
 	}
 
 	ConstantBuffer[size_t] constantBuffers;
-	Type[string] types;
 	Function[string] globalFunctions;
 
 private:
@@ -124,9 +123,9 @@ private:
 		makeUnaryFunction("abs");
 		makeUnaryFunction("saturate");
 
-		auto float1 = this.getVectorType("float", 1);
-		auto float3 = this.getVectorType("float", 3);
-		auto float4 = this.getVectorType("float", 4);
+		auto float1 = this.getType("float", 1);
+		auto float3 = this.getType("float", 3);
+		auto float4 = this.getType("float", 4);
 
 		this.globalFunctions["dp3"] =
 			new Function(float3, "dot", tuple(float3, "a"), tuple(float3, "b"));
@@ -161,7 +160,7 @@ private:
 			case Opcode.DCL_OUTPUT:
 			case Opcode.DCL_OUTPUT_SIV:
 				auto op = decl.op;
-				auto type = this.getVectorType("float", op.staticIndex.length);
+				auto type = this.getType("float", op.staticIndex.length);
 
 				string name;
 				if (decl.opcode == Opcode.DCL_INPUT_SIV || decl.opcode == Opcode.DCL_OUTPUT_SIV)
@@ -182,7 +181,7 @@ private:
 				auto constantBuffer = new ConstantBuffer(index);
 
 				auto count = op.indices[1].disp;
-				auto variable = new Variable(this.types["float4"], "cb" ~ index.to!string(), count);
+				auto variable = new Variable(this.getType("float", 4), "cb" ~ index.to!string(), count);
 
 				constantBuffer.addVariable(variable);
 
@@ -197,19 +196,20 @@ private:
 
 	void addMainFunctionScope(Scope rootNode)
 	{
-		auto mainFn = new Function(this.types["ShaderOutput"], "main", 
-			tuple(this.types["ShaderInput"], "input"));
+		auto shaderOutputType = this.getType("ShaderOutput");		
+		auto mainFn = new Function(
+			shaderOutputType, "main", tuple(this.getType("ShaderInput"), "input"));
 
 		auto mainFnScope = new FunctionScope(mainFn);
 		
 		foreach (i; 0..this.registerCount)
 		{
-			auto type = this.getVectorType("float", 4);
+			auto type = this.getType("float", 4);
 			auto name = "r%s".format(i);
 			mainFnScope.addVariable(new Variable(type, name));
 		}
 
-		mainFnScope.addVariable(new Variable(this.types["ShaderOutput"], "output"));
+		mainFnScope.addVariable(new Variable(shaderOutputType, "output"));
 		this.addInstructions(mainFnScope);
 		rootNode.statements ~= mainFnScope;
 	}
@@ -231,7 +231,7 @@ private:
 				break;
 			case Opcode.IF:
 				auto operand = this.decompileOperand(currentScope, instruction.operands[0]);
-				auto zero = new IntImmediate(this.types["int"], 0);
+				auto zero = new IntImmediate(this.getType("int"), 0);
 				auto valueExpr = new ValueExpr(zero);
 
 				if (instruction.instruction.testNz)
@@ -306,7 +306,7 @@ private:
 
 			ASTNode makeIntegerImmediate(int v)
 			{
-				return new ValueExpr(new IntImmediate(this.types["int"], v));
+				return new ValueExpr(new IntImmediate(this.getType("int"), v));
 			}
 
 			foreach (index; operand.indices[1..$])
@@ -392,19 +392,19 @@ private:
 			if (type == OpcodeType.INT)
 			{
 				auto values = operand.values.map!(a => a.i32).array();
-				auto vectorType = this.getVectorType("int", values.length);
+				auto vectorType = this.getType("int", values.length);
 				newExpr = new ValueExpr(new IntImmediate(vectorType, values));
 			}
 			else if (type == OpcodeType.UINT)
 			{
 				auto values = operand.values.map!(a => a.u32).array();
-				auto vectorType = this.getVectorType("uint", values.length);
+				auto vectorType = this.getType("uint", values.length);
 				newExpr = new ValueExpr(new UIntImmediate(vectorType, values));
 			}
 			else
 			{
 				auto values = operand.values.map!(a => a.f32).array();
-				auto vectorType = this.getVectorType("float", values.length);
+				auto vectorType = this.getType("float", values.length);
 				newExpr = new ValueExpr(new FloatImmediate(vectorType, values));				
 			}
 			break;
@@ -420,7 +420,7 @@ private:
 		this.types[structure.name] = new StructureType(structure);
 	}
 
-	Type getVectorType(T)(string name, T size)
+	Type getType(T = int)(string name, T size = 1)
 		if (isIntegral!T)
 	{
 		if (size > 1)
@@ -432,6 +432,7 @@ private:
 	const(Program)* program;
 	Structure inputStruct;
 	Structure outputStruct;
+	Type[string] types;
 	Pass[] prePasses;
 	Pass[] passes;
 	Pass[] postPasses;

@@ -149,7 +149,7 @@ class Visitor : RecursiveVisitor
 			// AFTER:  a = b * 2
 			if (addExpr.lhs == addExpr.rhs)
 			{
-				auto immediate = new FloatImmediate(decompiler.types["float"], 2);
+				auto immediate = new FloatImmediate(decompiler.getType("float"), 2);
 				rhs = new MultiplyExpr(addExpr.lhs, new ValueExpr(immediate));
 				this.madeChanges = true;
 			}
@@ -173,7 +173,7 @@ class Visitor : RecursiveVisitor
 			if (value.length > 1 && value.uniq.walkLength == 1)
 			{
 				floatImmediate.value = value[0..1];
-				floatImmediate.type = this.decompiler.getVectorType("float", 1);
+				floatImmediate.type = this.decompiler.getType("float", 1);
 				this.madeChanges = true;
 			}
 		}			
@@ -254,7 +254,7 @@ class Visitor : RecursiveVisitor
 
 				if (this.swizzle.length < value.length)
 				{
-					auto type = this.outer.decompiler.getVectorType(
+					auto type = this.outer.decompiler.getType(
 						vectorType.type.name, this.swizzle.length);
 
 					floatImmediate.type = type;
