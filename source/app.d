@@ -7,7 +7,6 @@ import sm4.program;
 
 import decompiler.main;
 import decompiler.dumpvisitor, decompiler.textvisitor;
-import decompiler.pass.variableallocate;
 import decompiler.pass.rewrite;
 
 import disassembler.main;
@@ -40,10 +39,7 @@ void main(string[] args)
 		auto decompilerInstance = new Decompiler(program);
 
 		if (process)
-		{
 			decompilerInstance.addPass(new Rewrite());
-			decompilerInstance.addPostPass(new VariableAllocate());
-		}
 
 		auto rootNode = decompilerInstance.run();
 
