@@ -3,6 +3,7 @@ module decompiler.main;
 import decompiler.ast;
 import decompiler.type;
 import decompiler.value;
+import ir = decompiler.ir;
 
 import decompiler.pass.pass;
 
@@ -22,6 +23,7 @@ class Decompiler
 	this(const(Program)* program)
 	{
 		this.program = program;
+		this.irState = new ir.State(this);
 		this.generateTypes();
 		this.generateFunctions();
 	}
@@ -46,6 +48,8 @@ class Decompiler
 		auto rootNode = new Scope;
 		this.addDecls(rootNode);
 		this.addMainFunctionScope(rootNode);
+		this.irState.generate();
+		this.irState.print();
 
 		uint[string] passesCount;
 		bool continueRunning = true;
@@ -85,6 +89,7 @@ class Decompiler
 
 	ConstantBuffer[size_t] constantBuffers;
 	Function[string] globalFunctions;
+	const(Program)* program;
 
 private:
 	void generateTypes()
@@ -429,12 +434,12 @@ private:
 			return this.types[name];
 	}
 
-	const(Program)* program;
 	Structure inputStruct;
 	Structure outputStruct;
 	Type[string] types;
 	Pass[] prePasses;
 	Pass[] passes;
 	Pass[] postPasses;
+	ir.State irState;
 	uint registerCount = 0;
 }

@@ -42,11 +42,12 @@ void main(string[] args)
 			decompilerInstance.addPass(new Rewrite());
 
 		auto rootNode = decompilerInstance.run();
-
+/*
 		if (dumpAST)
 			rootNode.accept(new DumpVisitor());
 		else
 			rootNode.accept(new TextVisitor());
+*/
 	}
 	else
 	{
