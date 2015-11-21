@@ -10,6 +10,7 @@ import std.algorithm;
 import std.range;
 import std.stdio;
 import std.conv;
+import std.typecons;
 
 struct Operand
 {
@@ -28,6 +29,7 @@ struct Operand
 struct Instruction
 {
 	Opcode opcode;
+	Nullable!Operand destination;
 	Operand[] operands;
 }
 
@@ -131,7 +133,8 @@ class State
 				auto operandType = OpcodeTypes[inst.opcode];
 				Instruction instruction;
 				instruction.opcode = inst.opcode;
-				instruction.operands = inst.operands.map!(a => this.generateOperand(a, operandType)).array();
+				instruction.destination = this.generateOperand(inst.operands[0], operandType);
+				instruction.operands = inst.operands[1..$].map!(a => this.generateOperand(a, operandType)).array();
 				this.instructions ~= instruction;
 				break;
 			default:
@@ -144,7 +147,14 @@ class State
 	{
 		foreach (inst; this.instructions)
 		{
-			writefln("%s %s", OpcodeNames[inst.opcode], inst.operands.map!(to!string).join(", "));
+			string s;
+
+			if (!inst.destination.isNull)
+				s ~= "%s = ".format(inst.destination);
+
+			s ~= "%s %s".format(OpcodeNames[inst.opcode], inst.operands.map!(to!string).join(", "));
+
+			writeln(s);
 		}
 	}
 
