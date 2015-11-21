@@ -1,6 +1,6 @@
 module decompiler.ir;
 
-import sm4.def : Opcode, FileType, OpcodeNames, SystemValueNames;
+import sm4.def;
 import prog = sm4.program;
 import decompiler.value;
 import decompiler.main : Decompiler;
@@ -13,12 +13,15 @@ import std.conv;
 
 struct Operand
 {
-	Variable variable;
+	Value value;
 	const(ubyte)[] swizzle;
 
 	string toString()
 	{
-		return "%s.%s".format(variable ? variable.name : "null", this.swizzle.map!(a => "xyzw"[a]).array());
+		string s = to!string(value);
+		if (swizzle.length)
+			s ~= "." ~ this.swizzle.map!(a => "xyzw"[a]).array();
+		return s;
 	}
 }
 
@@ -35,7 +38,7 @@ class State
 		this.decompiler = decompiler;
 	}
 
-	Operand generateOperand(const(prog.Operand)* operand)
+	Operand generateOperand(const(prog.Operand)* operand, OpcodeType type = OpcodeType.FLOAT)
 	{
 		switch (operand.file)
 		{
@@ -48,6 +51,25 @@ class State
 		case FileType.OUTPUT:
 			auto index = operand.indices[0].disp;
 			return Operand(this.outputs[index], operand.staticIndex);
+		case FileType.IMMEDIATE32:	
+			if (type == OpcodeType.INT)
+			{
+				auto values = operand.values.map!(a => a.i32).array();
+				auto vectorType = this.decompiler.getType("int", values.length);
+				return Operand(new IntImmediate(vectorType, values));
+			}
+			else if (type == OpcodeType.UINT)
+			{
+				auto values = operand.values.map!(a => a.u32).array();
+				auto vectorType = this.decompiler.getType("uint", values.length);
+				return Operand(new UIntImmediate(vectorType, values));
+			}
+			else
+			{
+				auto values = operand.values.map!(a => a.f32).array();
+				auto vectorType = this.decompiler.getType("float", values.length);
+				return Operand(new FloatImmediate(vectorType, values));
+			}
 		default:
 			return Operand.init;
 		}
@@ -106,9 +128,10 @@ class State
 			{
 			case Opcode.MUL:
 			case Opcode.ADD:
+				auto operandType = OpcodeTypes[inst.opcode];
 				Instruction instruction;
 				instruction.opcode = inst.opcode;
-				instruction.operands = inst.operands.map!(a => this.generateOperand(a)).array();
+				instruction.operands = inst.operands.map!(a => this.generateOperand(a, operandType)).array();
 				this.instructions ~= instruction;
 				break;
 			default:

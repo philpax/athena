@@ -23,6 +23,11 @@ class Variable : Value
 		this.name = name;
 		this.count = count;
 	}
+
+	override string toString()
+	{
+		return this.name;
+	}
 }
 
 class Immediate(T) : Value
