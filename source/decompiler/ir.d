@@ -19,7 +19,9 @@ struct Operand
 
 	string toString()
 	{
-		string s = to!string(value);
+		string s = to!string(this.value);
+		if (cast(Variable)this.value)
+			s = "%" ~ s;
 		if (swizzle.length)
 			s ~= "." ~ this.swizzle.map!(a => "xyzw"[a]).array();
 		return s;
