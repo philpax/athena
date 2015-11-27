@@ -135,6 +135,7 @@ class State
 			case Opcode.DP3:
 			case Opcode.RSQ:
 			case Opcode.EXP:
+			case Opcode.FRC:
 				auto operandType = OpcodeTypes[inst.opcode];
 				Instruction instruction;
 				instruction.opcode = inst.opcode;
