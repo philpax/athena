@@ -144,6 +144,7 @@ class State
 				this.instructions ~= instruction;
 				break;
 			default:
+				writeln("Unhandled opcode: ", inst.opcode);
 				continue;
 			}
 		}
