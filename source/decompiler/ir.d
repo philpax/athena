@@ -133,6 +133,7 @@ class State
 			case Opcode.MUL:
 			case Opcode.ADD:
 			case Opcode.DP3:
+			case Opcode.DP4:
 			case Opcode.RSQ:
 			case Opcode.EXP:
 			case Opcode.FRC:
