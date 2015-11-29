@@ -35,6 +35,28 @@ struct Instruction
 	Operand[] operands;
 }
 
+struct BasicBlock
+{
+	string name;
+	Instruction[] instructions;
+
+	void print()
+	{
+		writeln(this.name, ":");
+		foreach (ref inst; this.instructions)
+		{
+			string s;
+
+			if (!inst.destination.isNull)
+				s ~= "%s = ".format(inst.destination);
+
+			s ~= "%s %s".format(OpcodeNames[inst.opcode], inst.operands.map!(to!string).join(", "));
+
+			writeln(s);
+		}
+	}
+}
+
 class State
 {
 	this(Decompiler decompiler)
@@ -126,6 +148,8 @@ class State
 			}
 		}
 
+		this.basicBlocks ~= BasicBlock("entrypoint");
+
 		foreach (inst; this.decompiler.program.instructions)
 		{
 			switch (inst.opcode)
@@ -142,7 +166,7 @@ class State
 				instruction.opcode = inst.opcode;
 				instruction.destination = this.generateOperand(inst.operands[0], operandType);
 				instruction.operands = inst.operands[1..$].map!(a => this.generateOperand(a, operandType)).array();
-				this.instructions ~= instruction;
+				this.basicBlocks[$-1].instructions ~= instruction;
 				break;
 			default:
 				writeln("Unhandled opcode: ", inst.opcode);
@@ -153,17 +177,8 @@ class State
 
 	void print()
 	{
-		foreach (inst; this.instructions)
-		{
-			string s;
-
-			if (!inst.destination.isNull)
-				s ~= "%s = ".format(inst.destination);
-
-			s ~= "%s %s".format(OpcodeNames[inst.opcode], inst.operands.map!(to!string).join(", "));
-
-			writeln(s);
-		}
+		foreach (ref basicBlock; this.basicBlocks)
+			basicBlock.print();
 	}
 
 private:
@@ -172,5 +187,6 @@ private:
 	Variable[] inputs;
 	Variable[] outputs;
 	Variable[size_t] constantBuffers;
+	BasicBlock[] basicBlocks;
 	Instruction[] instructions;
 }
