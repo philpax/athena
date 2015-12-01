@@ -45,7 +45,7 @@ struct BasicBlock
 		writeln(this.name, ":");
 		foreach (ref inst; this.instructions)
 		{
-			string s;
+			string s = "  ";
 
 			if (!inst.destination.isNull)
 				s ~= "%s = ".format(inst.destination);
@@ -189,7 +189,10 @@ class State
 	void print()
 	{
 		foreach (ref basicBlock; this.basicBlocks)
+		{
 			basicBlock.print();
+			writeln();
+		}
 	}
 
 private:
