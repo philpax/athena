@@ -149,6 +149,7 @@ class State
 		}
 
 		this.basicBlocks ~= BasicBlock("entrypoint");
+		auto ifCounter = 0;
 
 		foreach (inst; this.decompiler.program.instructions)
 		{
@@ -167,6 +168,16 @@ class State
 				instruction.destination = this.generateOperand(inst.operands[0], operandType);
 				instruction.operands = inst.operands[1..$].map!(a => this.generateOperand(a, operandType)).array();
 				this.basicBlocks[$-1].instructions ~= instruction;
+				break;
+			case Opcode.IF:
+				++ifCounter;
+				this.basicBlocks ~= BasicBlock("if" ~ ifCounter.to!string());
+				break;
+			case Opcode.ELSE:
+				this.basicBlocks ~= BasicBlock("else" ~ ifCounter.to!string());
+				break;
+			case Opcode.ENDIF:
+				this.basicBlocks ~= BasicBlock("then" ~ ifCounter.to!string());
 				break;
 			default:
 				writeln("Unhandled opcode: ", inst.opcode);
