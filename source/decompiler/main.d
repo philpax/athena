@@ -110,6 +110,7 @@ private:
 		generateSetOfTypes("float");
 		generateSetOfTypes("int");
 		generateSetOfTypes("uint");
+		generateSetOfTypes("bool");
 
 		// TODO: Automated checking for this type.
 		// It acts as a glue type for AST construction.
