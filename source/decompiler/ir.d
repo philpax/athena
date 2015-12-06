@@ -4,6 +4,7 @@ import def = sm4.def;
 import prog = sm4.program;
 import decompiler.value;
 import decompiler.main : Decompiler;
+import decompiler.type;
 import util;
 
 import std.string;
@@ -15,8 +16,8 @@ import std.typecons;
 import std.traits;
 import std.variant;
 
-mixin ExtendEnum!("Opcode", def.Opcode, "JMP");
-immutable OpcodeNames = def.OpcodeNames ~ ["", "jmp"];
+mixin ExtendEnum!("Opcode", def.Opcode, "JMP", "BRANCH");
+immutable OpcodeNames = def.OpcodeNames ~ ["", "jmp", "branch"];
 
 struct Operand
 {
@@ -187,7 +188,16 @@ class State
 		}
 
 		this.basicBlocks ~= new BasicBlock("entrypoint");
-		auto ifCounter = 0;z
+		auto ifCounter = 0;
+		auto variableCounter = 0;
+		auto boolType = this.decompiler.getType("bool");
+		auto zeroImmediate = new IntImmediate(this.decompiler.getType("int"), 0);
+
+		Variable makeTemporaryVariable(Type type)
+		{
+			++variableCounter;
+			return new Variable(type, "temp" ~ variableCounter.to!string());
+		}
 
 		foreach (inst; this.decompiler.program.instructions)
 		{
@@ -208,27 +218,44 @@ class State
 				this.basicBlocks[$-1].instructions ~= instruction;
 				break;
 			case Opcode.IF:
-				++ifCounter;
 				this.basicBlocks ~= new BasicBlock("if" ~ ifCounter.to!string());
 
 				ConditionalBranch branch;
+				branch.index = ifCounter;
+				branch.condition = this.generateOperand(inst.operands[0]);
 				branch.precedingBlock = this.basicBlocks[$-2];
 				branch.ifBlock = this.basicBlocks[$-1];
 				this.branches ~= branch;
+
+				++ifCounter;
 				break;
 			case Opcode.ELSE:
-				this.basicBlocks ~= new BasicBlock("else" ~ ifCounter.to!string());
+				auto branch = this.branches[$-1];
+				this.basicBlocks ~= new BasicBlock("else" ~ branch.index.to!string());
 				this.branches[$-1].elseBlock = this.basicBlocks[$-1];
 				break;
 			case Opcode.ENDIF:
-				this.basicBlocks ~= new BasicBlock("then" ~ ifCounter.to!string());
 				auto branch = this.branches[$-1];
+				this.basicBlocks ~= new BasicBlock("then" ~ branch.index.to!string());
 
-				Instruction branchEnd;
-				branchEnd.opcode = Opcode.JMP;
-				branchEnd.operands = [Operand(this.basicBlocks[$-1])];
-				branch.ifBlock.instructions ~= branchEnd;
-				branch.elseBlock.instructions ~= branchEnd;
+				auto tempVariable = makeTemporaryVariable(boolType);
+				Instruction cmpInst;
+				cmpInst.opcode = inst.instruction.testNz ? Opcode.NE : Opcode.EQ;
+				cmpInst.destination = Operand(tempVariable);
+				cmpInst.operands = [branch.condition, Operand(zeroImmediate)];
+				branch.precedingBlock.instructions ~= cmpInst;
+
+				Instruction branchInst;
+				branchInst.opcode = Opcode.BRANCH;
+				branchInst.operands = [Operand(tempVariable), 
+					Operand(branch.ifBlock), Operand(branch.elseBlock)];
+				branch.precedingBlock.instructions ~= branchInst;
+
+				Instruction jmpInst;
+				jmpInst.opcode = Opcode.JMP;
+				jmpInst.operands = [Operand(this.basicBlocks[$-1])];
+				branch.ifBlock.instructions ~= jmpInst;
+				branch.elseBlock.instructions ~= jmpInst;
 
 				this.branches = this.branches[0..$-1];
 				break;
@@ -259,6 +286,8 @@ private:
 
 	struct ConditionalBranch
 	{
+		int index;
+		Operand condition;
 		BasicBlock* precedingBlock;
 		BasicBlock* ifBlock;
 		BasicBlock* elseBlock;
