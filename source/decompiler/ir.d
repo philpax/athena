@@ -41,6 +41,14 @@ struct Operand
 		this.value = block;
 	}
 
+	@property Nullable!ValueOperand valueOperand()
+	{
+		if (this.value.convertsTo!ValueOperand)
+			return Nullable!ValueOperand(this.value.get!ValueOperand);
+		else
+			return Nullable!ValueOperand();
+	}
+
 	string toString()
 	{
 		if (!this.value.hasValue)
@@ -216,6 +224,24 @@ class State
 				instruction.destination = this.generateOperand(inst.operands[0], operandType);
 				instruction.operands = inst.operands[1..$].map!(a => this.generateOperand(a, operandType)).array();
 				this.basicBlocks[$-1].instructions ~= instruction;
+				break;
+			case Opcode.MAD:
+				auto operandType = def.OpcodeTypes[inst.opcode];
+
+				auto destination = this.generateOperand(inst.operands[0], operandType);
+				auto tempVariable = makeTemporaryVariable(destination.valueOperand.value.type);
+
+				Instruction mul;
+				mul.opcode = Opcode.MUL;
+				mul.destination = Operand(tempVariable);
+				mul.operands = inst.operands[1..$-1].map!(a => this.generateOperand(a, operandType)).array();
+				this.basicBlocks[$-1].instructions ~= mul;
+
+				Instruction add;
+				add.opcode = Opcode.ADD;
+				add.destination = destination;
+				add.operands = [mul.destination, this.generateOperand(inst.operands[$-1], operandType)];
+				this.basicBlocks[$-1].instructions ~= add;
 				break;
 			case Opcode.IF:
 				this.basicBlocks ~= new BasicBlock("if" ~ ifCounter.to!string());
