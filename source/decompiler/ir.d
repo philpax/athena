@@ -83,7 +83,7 @@ struct Instruction
 		string s = "";
 
 		if (!this.destination.isNull)
-			s ~= "%s = ".format(this.destination);
+			s ~= "%s: %s = ".format(this.destination, this.destination.valueOperand.value.type);
 
 		s ~= "%s %s".format(OpcodeNames[this.opcode], this.operands.map!(to!string).join(", "));
 
