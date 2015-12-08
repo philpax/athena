@@ -211,18 +211,15 @@ class State
 		{
 			switch (cast(Opcode)inst.opcode)
 			{
-			case Opcode.MUL:
-			case Opcode.ADD:
-			case Opcode.DP3:
-			case Opcode.DP4:
-			case Opcode.RSQ:
-			case Opcode.EXP:
-			case Opcode.FRC:
+			default:
 				auto operandType = def.OpcodeTypes[inst.opcode];
 				Instruction instruction;
 				instruction.opcode = cast(Opcode)inst.opcode;
-				instruction.destination = this.generateOperand(inst.operands[0], operandType);
-				instruction.operands = inst.operands[1..$].map!(a => this.generateOperand(a, operandType)).array();
+				if (inst.operands.length > 1)
+				{
+					instruction.destination = this.generateOperand(inst.operands[0], operandType);
+					instruction.operands = inst.operands[1..$].map!(a => this.generateOperand(a, operandType)).array();
+				}
 				this.basicBlocks[$-1].instructions ~= instruction;
 				break;
 			case Opcode.MAD:
