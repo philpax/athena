@@ -248,6 +248,7 @@ class State
 
 				ConditionalBranch branch;
 				branch.index = ifCounter;
+				branch.notEqual = inst.instruction.testNz;
 				branch.condition = this.generateOperand(inst.operands[0]);
 				branch.precedingBlock = this.basicBlocks[$-2];
 				branch.ifBlock = this.basicBlocks[$-1];
@@ -266,7 +267,7 @@ class State
 
 				auto tempVariable = makeTemporaryVariable(boolType);
 				Instruction cmpInst;
-				cmpInst.opcode = inst.instruction.testNz ? Opcode.NE : Opcode.EQ;
+				cmpInst.opcode = branch.notEqual ? Opcode.NE : Opcode.EQ;
 				cmpInst.destination = Operand(tempVariable);
 				cmpInst.operands = [branch.condition, Operand(zeroImmediate)];
 				branch.precedingBlock.instructions ~= cmpInst;
@@ -285,9 +286,6 @@ class State
 
 				this.branches = this.branches[0..$-1];
 				break;
-			default:
-				writeln("Unhandled opcode: ", inst.opcode);
-				continue;
 			}
 		}
 	}
@@ -313,6 +311,7 @@ private:
 	struct ConditionalBranch
 	{
 		int index;
+		bool notEqual;
 		Operand condition;
 		BasicBlock* precedingBlock;
 		BasicBlock* ifBlock;
