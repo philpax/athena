@@ -435,6 +435,12 @@ private:
 			return this.types[name];
 	}
 
+	Type getTruncatedType(T = int)(Type baseType, T size)
+		if (isIntegral!T)
+	{
+		return this.getType((cast(VectorType)baseType).type.name, size);
+	}
+
 	Structure inputStruct;
 	Structure outputStruct;
 	Type[string] types;

@@ -25,14 +25,24 @@ struct Operand
 	{
 		Value value;
 		const(ubyte)[] swizzle;
+		Type forcedType;
+
+		@property Type type()
+		{
+			if (this.forcedType)
+				return this.forcedType;
+			else
+				return this.value.type;
+		}
 	}
 	Algebraic!(ValueOperand, BasicBlock*) value;
 
-	this(Value value, const(ubyte)[] swizzle = null)
+	this(Value value, const(ubyte)[] swizzle = null, Type type = null)
 	{
 		ValueOperand operand;
 		operand.value = value;
 		operand.swizzle = swizzle.dup;
+		operand.forcedType = type;
 		this.value = operand;
 	}
 
@@ -83,7 +93,7 @@ struct Instruction
 		string s = "";
 
 		if (!this.destination.isNull)
-			s ~= "%s: %s = ".format(this.destination, this.destination.valueOperand.value.type);
+			s ~= "%s: %s = ".format(this.destination, this.destination.valueOperand.type);
 
 		s ~= "%s %s".format(OpcodeNames[this.opcode], this.operands.map!(to!string).join(", "));
 
@@ -111,27 +121,34 @@ class State
 		this.decompiler = decompiler;
 	}
 
-	Operand generateOperand(const(prog.Operand)* operand, def.OpcodeType type = def.OpcodeType.FLOAT)
+	Operand generateOperand(const(prog.Operand)* operand, def.OpcodeType opcodeType = def.OpcodeType.FLOAT)
 	{
+		auto staticIndex = operand.staticIndex;
 		switch (operand.file)
 		{
 		case def.FileType.TEMP:
 			auto index = operand.indices[0].disp;
-			return Operand(this.registers[index], operand.staticIndex);
+			auto variable = this.registers[index];
+			auto type = this.decompiler.getTruncatedType(variable.type, staticIndex.length);
+			return Operand(variable, staticIndex, type);
 		case def.FileType.INPUT:
 			auto index = operand.indices[0].disp;
-			return Operand(this.inputs[index], operand.staticIndex);
+			auto variable = this.inputs[index];
+			auto type = this.decompiler.getTruncatedType(variable.type, staticIndex.length);
+			return Operand(variable, staticIndex, type);
 		case def.FileType.OUTPUT:
 			auto index = operand.indices[0].disp;
-			return Operand(this.outputs[index], operand.staticIndex);
-		case def.FileType.IMMEDIATE32:	
-			if (type == def.OpcodeType.INT)
+			auto variable = this.outputs[index];
+			auto type = this.decompiler.getTruncatedType(variable.type, staticIndex.length);
+			return Operand(variable, staticIndex, type);
+		case def.FileType.IMMEDIATE32:
+			if (opcodeType == def.OpcodeType.INT)
 			{
 				auto values = operand.values.map!(a => a.i32).array();
 				auto vectorType = this.decompiler.getType("int", values.length);
 				return Operand(new IntImmediate(vectorType, values));
 			}
-			else if (type == def.OpcodeType.UINT)
+			else if (opcodeType == def.OpcodeType.UINT)
 			{
 				auto values = operand.values.map!(a => a.u32).array();
 				auto vectorType = this.decompiler.getType("uint", values.length);
