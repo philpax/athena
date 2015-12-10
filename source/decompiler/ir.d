@@ -16,8 +16,8 @@ import std.typecons;
 import std.traits;
 import std.variant;
 
-mixin ExtendEnum!("Opcode", def.Opcode, "JMP", "BRANCH");
-immutable OpcodeNames = def.OpcodeNames ~ ["", "jmp", "branch"];
+mixin ExtendEnum!("Opcode", def.Opcode, "JMP", "BRANCH", "SATURATE");
+immutable OpcodeNames = def.OpcodeNames ~ ["", "jmp", "branch", "saturate"];
 
 struct Operand
 {
@@ -300,6 +300,22 @@ class State
 
 				this.branches = this.branches[0..$-1];
 				break;
+			}
+
+			auto lastBlock = this.basicBlocks[$-1];
+			if (lastBlock.instructions.empty)
+				continue;
+
+			auto lastInstruction = lastBlock.instructions[$-1];
+			if (inst.instruction.sat && !lastInstruction.destination.isNull)
+			{
+				auto destination = lastInstruction.destination.get;
+
+				Instruction saturate;
+				saturate.opcode = Opcode.SATURATE;
+				saturate.destination = destination;
+				saturate.operands = [destination];
+				this.basicBlocks[$-1].instructions ~= saturate;
 			}
 		}
 	}
