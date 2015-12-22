@@ -53,7 +53,7 @@ struct Operand
 
 	@property Nullable!ValueOperand valueOperand()
 	{
-		if (this.value.convertsTo!ValueOperand)
+		if (this.value.hasValue && this.value.convertsTo!ValueOperand)
 			return Nullable!ValueOperand(this.value.get!ValueOperand);
 		else
 			return Nullable!ValueOperand();
